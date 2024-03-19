@@ -16,6 +16,9 @@ devDependencies:
   '@crxjs/vite-plugin':
     specifier: 2.0.0-beta.23
     version: 2.0.0-beta.23
+  '@tsconfig/strictest':
+    specifier: ^2.0.3
+    version: 2.0.3
   '@types/chrome':
     specifier: ^0.0.263
     version: 0.0.263
@@ -730,6 +733,10 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@tsconfig/strictest@2.0.3:
+    resolution: {integrity: sha512-MroLvRhMbqtXI5WBSwoomro6OQS4xnCoudUrMb20JO0vLKUs0bAaCEcvM/immEBSJjFAK1l6jW1oAO8q3Ancrg==}
+    dev: true
 
   /@types/babel__core@7.20.5:
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
