@@ -64,6 +64,7 @@ const Link: React.FC<{ href: string; children: React.ReactNode }> = ({
 const App: React.FC = () => {
   const [error, setError] = useState(false);
   const [url, setUrl] = useState<URL>();
+  const [path, setPath] = useState<string>();
   const [feature, setFeature] = useState<string>();
   const [group, setGroup] = useState<Group>();
   const [projects, setProjects] = useState<Project[]>();
@@ -74,6 +75,7 @@ const App: React.FC = () => {
       setUrl(url);
 
       const { path, feature } = parsePathname(url.pathname);
+      setPath(path);
       setFeature(feature);
       if (path === undefined) {
         setError(true);
@@ -111,6 +113,7 @@ const App: React.FC = () => {
             >
               {group.name}
             </Link>
+            {group.full_path === path ? "✅" : <></>}
           </li>
         </ul>
       </li>
@@ -128,6 +131,7 @@ const App: React.FC = () => {
               >
                 {project.name}
               </Link>
+              {project.path_with_namespace === path ? "✅" : <></>}
             </li>
           ))}
         </ul>
