@@ -1,10 +1,16 @@
+import {
+  Avatar,
+  Listbox,
+  ListboxItem,
+  ListboxSection,
+} from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import "./App.css";
 import { Group, Project } from "./types";
 import { useCurrentUrl } from "./hooks";
 
 const re =
-  /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-][a-zA-Z0-9]+)*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-][a-zA-Z0-9]+)*)*)(?:\/-\/(?<feature>[a-z]+)\/?)?/;
+  /^\/(?:groups\/)?(?<path>[a-zA-Z0-9]+(?:[a-zA-Z0-9_.-][a-zA-Z0-9]+)*(?:\/[a-zA-Z0-9]+(?:[a-zA-Z0-9_.-][a-zA-Z0-9]+)*)*)(?:\/-\/(?<feature>[a-z]+)\/?)?/;
 
 const parsePathname = (pathname: string) => {
   const array = re.exec(pathname);
@@ -44,14 +50,7 @@ const getClosestGroup = async (origin: string, path: string) => {
   }
 };
 
-const Link: React.FC<{ href: string; children: React.ReactNode }> = ({
-  href,
-  children,
-}) => (
-  <a href={href} onClick={() => chrome.tabs.update({ url: href })}>
-    {children}
-  </a>
-);
+const navigate = (url: string) => chrome.tabs.update({ url });
 
 const App: React.FC = () => {
   const [error, setError] = useState(false);
@@ -85,44 +84,44 @@ const App: React.FC = () => {
   if (group === undefined || projects === undefined) return "loading";
 
   return (
-    <ul style={{ textWrap: "nowrap" }}>
-      <li>
-        Group
-        <ul>
-          <li>
-            <Link
-              href={
+    <Listbox selectionMode="single" selectedKeys={[path]}>
+      <ListboxSection title="Group" showDivider>
+        <ListboxItem
+          key={group.full_path}
+          onPress={() =>
+            navigate(
+              feature !== undefined
+                ? `${group.web_url}/-/${feature}${url.search}`
+                : group.web_url
+            )
+          }
+          startContent={
+            <Avatar isBordered radius="sm" src={group.avatar_url} />
+          }
+        >
+          {group.name}
+        </ListboxItem>
+      </ListboxSection>
+      <ListboxSection title="Projects">
+        {projects.map((project) => (
+          <ListboxItem
+            key={project.path_with_namespace}
+            onPress={() =>
+              navigate(
                 feature !== undefined
-                  ? `${group.web_url}/-/${feature}${url.search}`
-                  : group.web_url
-              }
-            >
-              {group.name}
-            </Link>
-            {group.full_path === path ? "✅" : <></>}
-          </li>
-        </ul>
-      </li>
-      <li>
-        Projects
-        <ul>
-          {projects.map((project) => (
-            <li key={project.web_url}>
-              <Link
-                href={
-                  feature !== undefined
-                    ? `${project.web_url}/-/${feature}${url.search}`
-                    : project.web_url
-                }
-              >
-                {project.name}
-              </Link>
-              {project.path_with_namespace === path ? "✅" : <></>}
-            </li>
-          ))}
-        </ul>
-      </li>
-    </ul>
+                  ? `${project.web_url}/-/${feature}${url.search}`
+                  : project.web_url
+              )
+            }
+            startContent={
+              <Avatar isBordered radius="sm" src={project.avatar_url} />
+            }
+          >
+            {project.name}
+          </ListboxItem>
+        ))}
+      </ListboxSection>
+    </Listbox>
   );
 };
 
