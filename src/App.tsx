@@ -1,15 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import { Group, Project } from "./types";
-
-const getCurrentUrl = async () => {
-  const tabs = await chrome.tabs.query({
-    active: true,
-    currentWindow: true,
-  });
-
-  return new URL(tabs[0]!.url!);
-};
+import { useCurrentUrl } from "./hooks";
 
 const re =
   /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-][a-zA-Z0-9]+)*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-][a-zA-Z0-9]+)*)*)(?:\/-\/(?<feature>[a-z]+)\/?)?/;
@@ -63,40 +55,34 @@ const Link: React.FC<{ href: string; children: React.ReactNode }> = ({
 
 const App: React.FC = () => {
   const [error, setError] = useState(false);
-  const [url, setUrl] = useState<URL>();
-  const [path, setPath] = useState<string>();
-  const [feature, setFeature] = useState<string>();
   const [group, setGroup] = useState<Group>();
   const [projects, setProjects] = useState<Project[]>();
 
+  const url = useCurrentUrl();
+
+  const { path, feature } =
+    url !== undefined
+      ? parsePathname(url.pathname)
+      : { path: undefined, feature: undefined };
+
   useEffect(() => {
     (async () => {
-      const url = await getCurrentUrl();
-      setUrl(url);
-
-      const { path, feature } = parsePathname(url.pathname);
-      setPath(path);
-      setFeature(feature);
-      if (path === undefined) {
-        setError(true);
-        return;
-      }
-
-      try {
-        const { group, projects } = await getClosestGroup(url.origin, path);
-        setGroup(group);
-        setProjects(projects);
-      } catch (error) {
-        console.error(error);
-        setError(true);
-      }
+      if (url !== undefined && path !== undefined)
+        try {
+          const { group, projects } = await getClosestGroup(url.origin, path);
+          setGroup(group);
+          setProjects(projects);
+        } catch (error) {
+          console.error(error);
+          setError(true);
+        }
     })();
-  }, []);
+  }, [url, path]);
 
+  if (url === undefined) return;
+  if (path === undefined) return "このページはGroupでもProjectでもありません";
   if (error) return "error";
-
-  if (url === undefined || group === undefined || projects === undefined)
-    return undefined;
+  if (group === undefined || projects === undefined) return "loading";
 
   return (
     <ul style={{ textWrap: "nowrap" }}>
