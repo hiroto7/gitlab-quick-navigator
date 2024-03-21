@@ -143,6 +143,7 @@ const App: React.FC = () => {
               <Avatar
                 isBordered
                 radius="sm"
+                size="sm"
                 name={group.name}
                 src={group.avatar_url}
               />
@@ -152,7 +153,7 @@ const App: React.FC = () => {
           </ListboxItem>
         ) : (
           <ListboxItem key="skeleton">
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-8 w-full" />
           </ListboxItem>
         )}
       </ListboxSection>
@@ -171,6 +172,7 @@ const App: React.FC = () => {
               <Avatar
                 isBordered
                 radius="sm"
+                size="sm"
                 name={project.name}
                 src={project.avatar_url}
               />
@@ -180,7 +182,7 @@ const App: React.FC = () => {
           </ListboxItem>
         )) ?? (
           <ListboxItem key="skeleton">
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-8 w-full" />
           </ListboxItem>
         )}
       </ListboxSection>
