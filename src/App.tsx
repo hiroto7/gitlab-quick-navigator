@@ -78,6 +78,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     (async () => {
+      setError(false);
       if (url?.origin !== undefined && path !== undefined)
         try {
           const group = await getClosestGroup(
@@ -95,6 +96,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     (async () => {
+      setError(false);
       if (url?.origin !== undefined && path !== undefined)
         try {
           const projects = await getClosestGroup(
@@ -111,8 +113,18 @@ const App: React.FC = () => {
   }, [url?.origin, path]);
 
   if (url === undefined) return;
-  if (path === undefined) return "このページはGroupでもProjectでもありません";
-  if (error) return "error";
+  if (path === undefined)
+    return (
+      <strong className="text-danger">
+        このページはGitLab上のGroupでもProjectでもありません。
+      </strong>
+    );
+  if (error)
+    return (
+      <strong className="text-danger">
+        GroupおよびProjectの一覧を取得できません。このページはGitLab上のGroupでもProjectでもない可能性があります。
+      </strong>
+    );
 
   return (
     <Listbox
