@@ -119,6 +119,14 @@ const App: React.FC = () => {
       selectionMode="single"
       selectedKeys={[path]}
       disabledKeys={["skeleton"]}
+      topContent={
+        feature !== undefined ? (
+          <p>
+            ほかのGroupまたはProjectの
+            <strong className="text-primary">{feature}</strong>に移動
+          </p>
+        ) : undefined
+      }
     >
       <ListboxSection title="Group" showDivider>
         {group !== undefined ? (
