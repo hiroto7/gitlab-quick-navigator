@@ -62,7 +62,34 @@ const getClosestGroup = async <T,>(
   }
 };
 
-const navigate = (url: string) => chrome.tabs.update({ url });
+const getListboxItem = ({
+  key,
+  name,
+  avatar,
+  href,
+}: {
+  key: string;
+  name: string;
+  avatar: string | null;
+  href: string;
+}) => (
+  <ListboxItem
+    key={key}
+    href={href}
+    onPress={() => chrome.tabs.update({ url: href })}
+    startContent={
+      <Avatar
+        isBordered
+        radius="sm"
+        size="sm"
+        name={name}
+        {...(avatar !== null ? { src: avatar } : {})}
+      />
+    }
+  >
+    {name}
+  </ListboxItem>
+);
 
 const App: React.FC = () => {
   const [error, setError] = useState(false);
@@ -142,27 +169,15 @@ const App: React.FC = () => {
     >
       <ListboxSection title="Group" showDivider>
         {group !== undefined ? (
-          <ListboxItem
-            key={group.full_path}
-            onPress={() =>
-              navigate(
-                feature !== undefined
-                  ? `${group.web_url}/-/${feature}${url.search}`
-                  : group.web_url
-              )
-            }
-            startContent={
-              <Avatar
-                isBordered
-                radius="sm"
-                size="sm"
-                name={group.name}
-                src={group.avatar_url}
-              />
-            }
-          >
-            {group.name}
-          </ListboxItem>
+          getListboxItem({
+            key: group.full_path,
+            href:
+              feature !== undefined
+                ? `${group.web_url}/-/${feature}${url.search}`
+                : group.web_url,
+            name: group.name,
+            avatar: group.avatar_url,
+          })
         ) : (
           <ListboxItem key="skeleton">
             <Skeleton className="h-8 w-full" />
@@ -170,29 +185,17 @@ const App: React.FC = () => {
         )}
       </ListboxSection>
       <ListboxSection title="Projects">
-        {projects?.map((project) => (
-          <ListboxItem
-            key={project.path_with_namespace}
-            onPress={() =>
-              navigate(
-                feature !== undefined
-                  ? `${project.web_url}/-/${feature}${url.search}`
-                  : project.web_url
-              )
-            }
-            startContent={
-              <Avatar
-                isBordered
-                radius="sm"
-                size="sm"
-                name={project.name}
-                src={project.avatar_url}
-              />
-            }
-          >
-            {project.name}
-          </ListboxItem>
-        )) ?? (
+        {projects?.map((project) =>
+          getListboxItem({
+            key: project.path_with_namespace,
+            href:
+              feature !== undefined
+                ? `${project.web_url}/-/${feature}${url.search}`
+                : project.web_url,
+            name: project.name,
+            avatar: project.avatar_url,
+          })
+        ) ?? (
           <ListboxItem key="skeleton">
             <Skeleton className="h-8 w-full" />
           </ListboxItem>
