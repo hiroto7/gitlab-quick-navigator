@@ -11,7 +11,7 @@ import { Group, Project } from "./types";
 import { useCurrentUrl } from "./hooks";
 
 const re =
-  /^\/(?:groups\/)?(?<path>[a-zA-Z0-9]+(?:[a-zA-Z0-9_.-][a-zA-Z0-9]+)*(?:\/[a-zA-Z0-9]+(?:[a-zA-Z0-9_.-][a-zA-Z0-9]+)*)*)(?:\/-\/(?<feature>[a-z_]+)\/?)?/;
+  /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+)\/?)?/;
 
 const parsePathname = (pathname: string) => {
   const array = re.exec(pathname);
@@ -37,7 +37,7 @@ const requestJson = async (url: URL): Promise<unknown> => {
 const fetchGroupDetail = async (origin: string, path: string) => {
   const encodedPath = encodeURIComponent(path);
   return (await requestJson(
-    new URL(`/api/v4/groups/${encodedPath}`, origin)
+    new URL(`/api/v4/groups/${encodedPath}?with_projects=false`, origin)
   )) as Group;
 };
 
