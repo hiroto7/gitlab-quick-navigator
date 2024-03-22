@@ -91,6 +91,9 @@ const getListboxItem = ({
   </ListboxItem>
 );
 
+const capitalize = (text: string) =>
+  text.slice(0, 1).toUpperCase() + text.slice(1);
+
 const App: React.FC = () => {
   const [error, setError] = useState(false);
   const [group, setGroup] = useState<Group>();
@@ -162,7 +165,10 @@ const App: React.FC = () => {
         feature !== undefined ? (
           <p>
             ほかのGroupまたはProjectの
-            <strong className="text-primary">{feature}</strong>に移動
+            <strong className="text-primary">
+              {capitalize(feature).replace("_", " ")}
+            </strong>
+            に移動
           </p>
         ) : undefined
       }
