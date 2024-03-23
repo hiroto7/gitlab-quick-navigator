@@ -1,6 +1,7 @@
 import {
   Avatar,
   Button,
+  Link,
   Listbox,
   ListboxItem,
   ListboxSection,
@@ -137,7 +138,7 @@ const App: React.FC = () => {
 
   const tokens = useChromeStorage("local") as
     | Record<string, string>
-    | undefined; 
+    | undefined;
 
   useEffect(() => {
     (async () => {
@@ -212,7 +213,7 @@ const App: React.FC = () => {
           color="primary"
           onPress={async () => {
             const token = prompt(
-              "read_apiスコープが付与されたアクセストークンを入力してください。"
+              `${url.origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。`
             );
             if (token === null) return;
 
@@ -225,6 +226,16 @@ const App: React.FC = () => {
         >
           アクセストークンを設定
         </Button>
+        <p>
+          <Link
+            size="sm"
+            showAnchorIcon
+            isExternal
+            href={`${url.origin}/-/user_settings/personal_access_tokens?name=GitLab+Quick+Navigator&scopes=read_api`}
+          >
+            アクセストークンを発行
+          </Link>
+        </p>
       </div>
     );
 

@@ -25,7 +25,7 @@ const App: React.FC = () => {
               onPress={() => {
                 if (
                   confirm(
-                    `${origin}用のアクセストークンを削除してもよろしいですか？`
+                    `${origin} 用のアクセストークンを削除してもよろしいですか？`
                   )
                 )
                   chrome.storage.local.remove(origin);
