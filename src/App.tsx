@@ -78,11 +78,17 @@ const getClosestGroup = async <T,>(
   path: string,
   token: string | undefined
 ) => {
-  try {
-    return await fetcher(origin, path, token);
-  } catch {
-    return await fetcher(origin, parent(path), token);
-  }
+  const paths = path.includes("/") ? [path, parent(path)] : [path];
+  const errors: unknown[] = [];
+
+  for (const path of paths)
+    try {
+      return await fetcher(origin, path, token);
+    } catch (error) {
+      errors.push(error);
+    }
+
+  throw AggregateError(errors);
 };
 
 const getListboxItem = ({
