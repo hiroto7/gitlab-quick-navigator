@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Button,
   Listbox,
   ListboxItem,
   ListboxSection,
@@ -8,7 +9,7 @@ import {
 import { useEffect, useState } from "react";
 import "./App.css";
 import { Group, Project } from "./types";
-import { useCurrentUrl } from "./hooks";
+import { useChromeStorage, useCurrentUrl } from "./hooks";
 
 const re =
   /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+)\/?)?/;
@@ -19,8 +20,15 @@ const parsePathname = (pathname: string) => {
   return { path, feature };
 };
 
-const requestJson = async (url: URL): Promise<unknown> => {
-  const response = await fetch(url);
+const requestJson = async (
+  url: URL,
+  token: string | undefined
+): Promise<unknown> => {
+  const headers = token !== undefined ? { "PRIVATE-TOKEN": token } : undefined;
+  const response = await fetch(
+    url,
+    headers !== undefined ? { headers } : undefined
+  );
 
   if (response.ok) {
     return await response.json();
@@ -34,31 +42,46 @@ const requestJson = async (url: URL): Promise<unknown> => {
   }
 };
 
-const fetchGroupDetail = async (origin: string, path: string) => {
+const fetchGroupDetail = async (
+  origin: string,
+  path: string,
+  token: string | undefined
+) => {
   const encodedPath = encodeURIComponent(path);
   return (await requestJson(
-    new URL(`/api/v4/groups/${encodedPath}?with_projects=false`, origin)
+    new URL(`/api/v4/groups/${encodedPath}?with_projects=false`, origin),
+    token
   )) as Group;
 };
 
-const fetchGroupProjects = async (origin: string, path: string) => {
+const fetchGroupProjects = async (
+  origin: string,
+  path: string,
+  token: string | undefined
+) => {
   const encodedPath = encodeURIComponent(path);
   return (await requestJson(
-    new URL(`/api/v4/groups/${encodedPath}/projects`, origin)
+    new URL(`/api/v4/groups/${encodedPath}/projects`, origin),
+    token
   )) as Project[];
 };
 
 const parent = (path: string) => path.split("/").slice(0, -1).join("/");
 
 const getClosestGroup = async <T,>(
-  fetcher: (origin: string, path: string) => Promise<T>,
+  fetcher: (
+    origin: string,
+    path: string,
+    token: string | undefined
+  ) => Promise<T>,
   origin: string,
-  path: string
+  path: string,
+  token: string | undefined
 ) => {
   try {
-    return await fetcher(origin, path);
+    return await fetcher(origin, path, token);
   } catch {
-    return await fetcher(origin, parent(path));
+    return await fetcher(origin, parent(path), token);
   }
 };
 
@@ -106,15 +129,25 @@ const App: React.FC = () => {
       ? parsePathname(url.pathname)
       : { path: undefined, feature: undefined };
 
+  const tokens = useChromeStorage("session") as Record<
+    string,
+    string | undefined
+  >;
+
   useEffect(() => {
     (async () => {
       setError(false);
-      if (url?.origin !== undefined && path !== undefined)
+      if (
+        url?.origin !== undefined &&
+        path !== undefined &&
+        tokens !== undefined
+      )
         try {
           const group = await getClosestGroup(
             fetchGroupDetail,
             url.origin,
-            path
+            path,
+            tokens[url.origin]
           );
           setGroup(group);
         } catch (error) {
@@ -122,7 +155,7 @@ const App: React.FC = () => {
           setError(true);
         }
     })();
-  }, [url?.origin, path]);
+  }, [url?.origin, path, tokens]);
 
   useEffect(() => {
     (async () => {
@@ -132,7 +165,8 @@ const App: React.FC = () => {
           const projects = await getClosestGroup(
             fetchGroupProjects,
             url.origin,
-            path
+            path,
+            tokens[url.origin]
           );
           setProjects(projects);
         } catch (error) {
@@ -140,7 +174,7 @@ const App: React.FC = () => {
           setError(true);
         }
     })();
-  }, [url?.origin, path]);
+  }, [url?.origin, path, tokens]);
 
   if (url === undefined) return;
   if (path === undefined)
@@ -151,9 +185,29 @@ const App: React.FC = () => {
     );
   if (error)
     return (
-      <strong className="text-danger">
-        GroupおよびProjectの一覧を取得できません。このページはGitLab上のGroupでもProjectでもない可能性があります。
-      </strong>
+      <>
+        <strong className="text-danger">
+          GroupやProjectの一覧を取得できません。このページがGitLab上のGroupでもProjectでもないか、権限がありません。プライベートなGroupやProjectで使うには、アクセストークンを設定してください。
+        </strong>
+        <Button
+          size="sm"
+          color="primary"
+          onPress={async () => {
+            const token = prompt(
+              "read_apiスコープが付与されたアクセストークンを入力してください。"
+            );
+            if (token === null) return;
+
+            if (token !== "")
+              await chrome.storage.session.set({
+                [url.origin]: token,
+              });
+            else await chrome.storage.session.remove(url.origin);
+          }}
+        >
+          アクセストークンを設定
+        </Button>
+      </>
     );
 
   return (

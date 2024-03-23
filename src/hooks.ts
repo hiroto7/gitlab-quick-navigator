@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export const useCurrentUrl = () => {
   const [href, setHref] = useState<string>();
@@ -31,4 +31,24 @@ export const useCurrentUrl = () => {
   });
 
   return url;
+};
+
+export const useChromeStorage = (area: chrome.storage.AreaName) => {
+  const [items, setItems] = useState<Record<string, unknown>>();
+
+  const load = useCallback(async () => {
+    const items = await chrome.storage[area].get();
+    setItems(items);
+  }, [area]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    chrome.storage[area].onChanged.addListener(load);
+    return () => chrome.storage[area].onChanged.removeListener(load);
+  }, [area, load]);
+
+  return items;
 };

@@ -3,5 +3,5 @@
   "name": "GitLab Quick Navigator",
   "version": "1.0.0",
   "action": { "default_popup": "index.html" },
-  "permissions": ["tabs"]
+  "permissions": ["tabs", "storage"]
 }
