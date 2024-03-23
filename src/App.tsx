@@ -188,16 +188,25 @@ const App: React.FC = () => {
   if (url === undefined) return;
   if (path === undefined)
     return (
-      <strong className="text-danger">
-        このページはGitLab上のGroupでもProjectでもありません。
-      </strong>
+      <div className="p-2">
+        <p>
+          <strong className="text-danger">
+            このページはGitLab上のGroupでもProjectでもありません。
+          </strong>
+        </p>
+      </div>
     );
   if (error)
     return (
-      <>
-        <strong className="text-danger">
-          GroupやProjectの一覧を取得できません。このページがGitLab上のGroupでもProjectでもないか、権限がありません。プライベートなGroupやProjectで使うには、アクセストークンを設定してください。
-        </strong>
+      <div className="p-2 flex flex-col gap-2">
+        <p>
+          <strong className="text-danger">
+            GroupやProjectの一覧を取得できません。
+          </strong>
+        </p>
+        <p>
+          このページがGitLab上のGroupでもProjectでもないか、権限がありません。プライベートなGroupやProjectで使うには、アクセストークンを設定してください。
+        </p>
         <Button
           size="sm"
           color="primary"
@@ -216,7 +225,7 @@ const App: React.FC = () => {
         >
           アクセストークンを設定
         </Button>
-      </>
+      </div>
     );
 
   return (
