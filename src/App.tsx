@@ -135,7 +135,7 @@ const App: React.FC = () => {
       ? parsePathname(url.pathname)
       : { path: undefined, feature: undefined };
 
-  const tokens = useChromeStorage("session") as Record<
+  const tokens = useChromeStorage("local") as Record<
     string,
     string | undefined
   >;
@@ -205,10 +205,10 @@ const App: React.FC = () => {
             if (token === null) return;
 
             if (token !== "")
-              await chrome.storage.session.set({
+              await chrome.storage.local.set({
                 [url.origin]: token,
               });
-            else await chrome.storage.session.remove(url.origin);
+            else await chrome.storage.local.remove(url.origin);
           }}
         >
           アクセストークンを設定
