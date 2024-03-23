@@ -135,10 +135,9 @@ const App: React.FC = () => {
       ? parsePathname(url.pathname)
       : { path: undefined, feature: undefined };
 
-  const tokens = useChromeStorage("local") as Record<
-    string,
-    string | undefined
-  >;
+  const tokens = useChromeStorage("local") as
+    | Record<string, string>
+    | undefined; 
 
   useEffect(() => {
     (async () => {
@@ -166,7 +165,11 @@ const App: React.FC = () => {
   useEffect(() => {
     (async () => {
       setError(false);
-      if (url?.origin !== undefined && path !== undefined)
+      if (
+        url?.origin !== undefined &&
+        path !== undefined &&
+        tokens !== undefined
+      )
         try {
           const projects = await getClosestGroup(
             fetchGroupProjects,
