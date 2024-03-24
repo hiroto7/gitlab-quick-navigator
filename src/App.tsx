@@ -96,30 +96,44 @@ const getListboxItem = ({
   key,
   name,
   avatar,
-  href,
+  base,
+  feature,
+  search,
 }: {
   key: string;
   name: string;
   avatar: string | null;
-  href: string;
-}) => (
-  <ListboxItem
-    key={key}
-    href={href}
-    onPress={() => chrome.tabs.update({ url: href })}
-    startContent={
-      <Avatar
-        isBordered
-        radius="sm"
-        size="sm"
-        name={name}
-        {...(avatar !== null ? { src: avatar } : {})}
-      />
-    }
-  >
-    {name}
-  </ListboxItem>
-);
+  base: string;
+  feature: string | undefined;
+  search: string;
+}) => {
+  const href = feature !== undefined ? `${base}/-/${feature}${search}` : base;
+
+  return (
+    <ListboxItem
+      key={key}
+      href={href}
+      onPress={() => chrome.tabs.update({ url: href })}
+      description={
+        feature !== undefined
+          ? capitalize(feature).replace("_", " ")
+          : undefined
+      }
+      startContent={
+        <Avatar
+          isBordered
+          radius="sm"
+          size="sm"
+          name={name}
+          {...(avatar !== null ? { src: avatar } : {})}
+          className="flex-shrink-0"
+        />
+      }
+    >
+      {name}
+    </ListboxItem>
+  );
+};
 
 const capitalize = (text: string) =>
   text.slice(0, 1).toUpperCase() + text.slice(1);
@@ -244,28 +258,16 @@ const App: React.FC = () => {
       selectionMode="single"
       selectedKeys={[path]}
       disabledKeys={["skeleton"]}
-      topContent={
-        feature !== undefined ? (
-          <p>
-            ほかのGroupまたはProjectの
-            <strong className="text-primary">
-              {capitalize(feature).replace("_", " ")}
-            </strong>
-            に移動
-          </p>
-        ) : undefined
-      }
     >
       <ListboxSection title="Group" showDivider>
         {group !== undefined ? (
           getListboxItem({
             key: group.full_path,
-            href:
-              feature !== undefined
-                ? `${group.web_url}/-/${feature}${url.search}`
-                : group.web_url,
+            base: group.web_url,
             name: group.name,
             avatar: group.avatar_url,
+            feature,
+            search: url.search,
           })
         ) : (
           <ListboxItem key="skeleton">
@@ -277,12 +279,11 @@ const App: React.FC = () => {
         {projects?.map((project) =>
           getListboxItem({
             key: project.path_with_namespace,
-            href:
-              feature !== undefined
-                ? `${project.web_url}/-/${feature}${url.search}`
-                : project.web_url,
+            base: project.web_url,
             name: project.name,
             avatar: project.avatar_url,
+            feature,
+            search: url.search,
           })
         ) ?? (
           <ListboxItem key="skeleton">
