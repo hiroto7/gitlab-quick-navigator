@@ -266,7 +266,7 @@ const App: React.FC = () => {
             base: group.web_url,
             name: group.name,
             avatar: group.avatar_url,
-            feature,
+            feature: feature === "project_members" ? "group_members" : feature,
             search: url.search,
           })
         ) : (
@@ -282,7 +282,7 @@ const App: React.FC = () => {
             base: project.web_url,
             name: project.name,
             avatar: project.avatar_url,
-            feature,
+            feature: feature === "group_members" ? "project_members" : feature,
             search: url.search,
           })
         ) ?? (
