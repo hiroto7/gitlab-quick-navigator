@@ -70,21 +70,15 @@ const fetchGroupProjects = async (
 const parent = (path: string) => path.split("/").slice(0, -1).join("/");
 
 const getClosestGroup = async <T,>(
-  fetcher: (
-    origin: string,
-    path: string,
-    token: string | undefined
-  ) => Promise<T>,
-  origin: string,
-  path: string,
-  token: string | undefined
+  fetcher: (path: string) => Promise<T>,
+  path: string
 ) => {
   const paths = path.includes("/") ? [path, parent(path)] : [path];
   const errors: unknown[] = [];
 
   for (const path of paths)
     try {
-      return await fetcher(origin, path, token);
+      return await fetcher(path);
     } catch (error) {
       errors.push(error);
     }
@@ -164,10 +158,8 @@ const App: React.FC = () => {
       )
         try {
           const group = await getClosestGroup(
-            fetchGroupDetail,
-            url.origin,
-            path,
-            tokens[url.origin]
+            (path) => fetchGroupDetail(url.origin, path, tokens[url.origin]),
+            path
           );
           setGroup(group);
         } catch (error) {
@@ -187,10 +179,8 @@ const App: React.FC = () => {
       )
         try {
           const projects = await getClosestGroup(
-            fetchGroupProjects,
-            url.origin,
-            path,
-            tokens[url.origin]
+            (path) => fetchGroupProjects(url.origin, path, tokens[url.origin]),
+            path
           );
           setProjects(projects);
         } catch (error) {
