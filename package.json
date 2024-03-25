@@ -20,7 +20,7 @@
     "@crxjs/vite-plugin": "2.0.0-beta.23",
     "@tsconfig/strictest": "^2.0.4",
     "@types/chrome": "^0.0.263",
-    "@types/react": "^18.2.69",
+    "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",
