@@ -23,12 +23,12 @@ const parsePathname = (pathname: string) => {
 
 const requestJson = async (
   url: URL,
-  token: string | undefined
+  token: string | undefined,
 ): Promise<unknown> => {
   const headers = token !== undefined ? { "PRIVATE-TOKEN": token } : undefined;
   const response = await fetch(
     url,
-    headers !== undefined ? { headers } : undefined
+    headers !== undefined ? { headers } : undefined,
   );
 
   if (response.ok) {
@@ -46,27 +46,27 @@ const requestJson = async (
 const fetchGroupDetail = async (
   origin: string,
   path: string,
-  token: string | undefined
+  token: string | undefined,
 ) => {
   const encodedPath = encodeURIComponent(path);
   return (await requestJson(
     new URL(`/api/v4/groups/${encodedPath}?with_projects=false`, origin),
-    token
+    token,
   )) as Group;
 };
 
 const fetchGroupProjects = async (
   origin: string,
   path: string,
-  token: string | undefined
+  token: string | undefined,
 ) => {
   const encodedPath = encodeURIComponent(path);
   return (await requestJson(
     new URL(
       `/api/v4/groups/${encodedPath}/projects?order_by=last_activity_at`,
-      origin
+      origin,
     ),
-    token
+    token,
   )) as Project[];
 };
 
@@ -74,7 +74,7 @@ const parent = (path: string) => path.split("/").slice(0, -1).join("/");
 
 const getClosestGroup = async <T,>(
   fetcher: (path: string) => Promise<T>,
-  path: string
+  path: string,
 ) => {
   const paths = path.includes("/") ? [path, parent(path)] : [path];
   const errors: unknown[] = [];
@@ -162,7 +162,7 @@ const App: React.FC = () => {
         try {
           const group = await getClosestGroup(
             (path) => fetchGroupDetail(url.origin, path, tokens[url.origin]),
-            path
+            path,
           );
           setGroup(group);
         } catch (error) {
@@ -183,7 +183,7 @@ const App: React.FC = () => {
         try {
           const projects = await getClosestGroup(
             (path) => fetchGroupProjects(url.origin, path, tokens[url.origin]),
-            path
+            path,
           );
           setProjects(projects);
         } catch (error) {
@@ -220,7 +220,7 @@ const App: React.FC = () => {
           color="primary"
           onPress={async () => {
             const token = prompt(
-              `${url.origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。`
+              `${url.origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。`,
             );
             if (token === null) return;
 
@@ -277,7 +277,7 @@ const App: React.FC = () => {
             avatar: project.avatar_url,
             feature: feature === "group_members" ? "project_members" : feature,
             search: url.search,
-          })
+          }),
         ) ?? (
           <ListboxItem key="skeleton">
             <Skeleton className="h-8 w-full" />

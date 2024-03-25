@@ -4,7 +4,7 @@ export const useCurrentUrl = () => {
   const [href, setHref] = useState<string>();
   const url = useMemo(
     () => (href !== undefined ? new URL(href) : undefined),
-    [href]
+    [href],
   );
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export const useCurrentUrl = () => {
   useEffect(() => {
     const callback = (
       _tabId: number,
-      changeInfo: chrome.tabs.TabChangeInfo
+      changeInfo: chrome.tabs.TabChangeInfo,
     ) => {
       if (changeInfo.url !== undefined) setHref(changeInfo.url);
     };
