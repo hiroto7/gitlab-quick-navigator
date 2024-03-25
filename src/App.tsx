@@ -196,7 +196,7 @@ const App: React.FC = () => {
   if (url === undefined) return;
   if (path === undefined)
     return (
-      <div className="p-2">
+      <div className="p-2 text-small">
         <p>
           <strong className="text-danger">
             このページはGitLab上のGroupでもProjectでもありません。
@@ -206,7 +206,7 @@ const App: React.FC = () => {
     );
   if (error)
     return (
-      <div className="p-2 flex flex-col gap-2">
+      <div className="p-2 flex flex-col gap-2 text-small">
         <p>
           <strong className="text-danger">
             GroupやProjectの一覧を取得できません。
