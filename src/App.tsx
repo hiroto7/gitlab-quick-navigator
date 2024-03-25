@@ -62,7 +62,10 @@ const fetchGroupProjects = async (
 ) => {
   const encodedPath = encodeURIComponent(path);
   return (await requestJson(
-    new URL(`/api/v4/groups/${encodedPath}/projects`, origin),
+    new URL(
+      `/api/v4/groups/${encodedPath}/projects?order_by=last_activity_at`,
+      origin
+    ),
     token
   )) as Project[];
 };
