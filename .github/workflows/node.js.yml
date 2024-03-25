@@ -25,3 +25,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - run: pnpm build
+      - run: pnpm lint
+      - run: pnpm exec prettier . --check
