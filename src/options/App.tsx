@@ -11,7 +11,7 @@ const App: React.FC = () => {
   return (
     <Listbox
       shouldHighlightOnFocus={false}
-      className="max-w-xl mx-auto"
+      className="mx-auto max-w-xl"
       topContent="設定済みのアクセストークン"
     >
       {Object.keys(tokens).map((origin) => (
