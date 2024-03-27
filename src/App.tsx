@@ -135,33 +135,23 @@ const getListboxItem = ({
 const capitalize = (text: string) =>
   text.slice(0, 1).toUpperCase() + text.slice(1);
 
-const App: React.FC = () => {
+const Main: React.FC<{ url: URL; token: string | undefined }> = ({
+  url,
+  token,
+}) => {
   const [error, setError] = useState(false);
   const [group, setGroup] = useState<Group>();
   const [projects, setProjects] = useState<Project[]>();
 
-  const url = useCurrentUrl();
-
-  const { path, feature } =
-    url !== undefined
-      ? parsePathname(url.pathname)
-      : { path: undefined, feature: undefined };
-
-  const tokens = useChromeStorage("local") as
-    | Record<string, string>
-    | undefined;
+  const { path, feature } = parsePathname(url.pathname);
 
   useEffect(() => {
     (async () => {
       setError(false);
-      if (
-        url?.origin !== undefined &&
-        path !== undefined &&
-        tokens !== undefined
-      )
+      if (path !== undefined)
         try {
           const group = await getClosestGroup(
-            (path) => fetchGroupDetail(url.origin, path, tokens[url.origin]),
+            (path) => fetchGroupDetail(url.origin, path, token),
             path,
           );
           setGroup(group);
@@ -170,19 +160,15 @@ const App: React.FC = () => {
           setError(true);
         }
     })();
-  }, [url?.origin, path, tokens]);
+  }, [url.origin, path, token]);
 
   useEffect(() => {
     (async () => {
       setError(false);
-      if (
-        url?.origin !== undefined &&
-        path !== undefined &&
-        tokens !== undefined
-      )
+      if (path !== undefined)
         try {
           const projects = await getClosestGroup(
-            (path) => fetchGroupProjects(url.origin, path, tokens[url.origin]),
+            (path) => fetchGroupProjects(url.origin, path, token),
             path,
           );
           setProjects(projects);
@@ -191,9 +177,8 @@ const App: React.FC = () => {
           setError(true);
         }
     })();
-  }, [url?.origin, path, tokens]);
+  }, [url?.origin, path, token]);
 
-  if (url === undefined) return;
   if (path === undefined)
     return (
       <div className="p-2 text-small">
@@ -224,11 +209,9 @@ const App: React.FC = () => {
             );
             if (token === null) return;
 
-            if (token !== "")
-              await chrome.storage.local.set({
-                [url.origin]: token,
-              });
-            else await chrome.storage.local.remove(url.origin);
+            await chrome.storage.local.set({
+              [url.origin]: token !== "" ? { token } : {},
+            });
           }}
         >
           アクセストークンを設定
@@ -286,6 +269,35 @@ const App: React.FC = () => {
       </ListboxSection>
     </Listbox>
   );
+};
+
+const App: React.FC = () => {
+  const url = useCurrentUrl();
+  const options = useChromeStorage("local") as
+    | Record<string, { token?: string }>
+    | undefined;
+
+  if (url === undefined || options === undefined) return;
+
+  const siteOptions = options[url.origin];
+
+  if (siteOptions !== undefined)
+    return <Main url={url} token={siteOptions.token} />;
+  else
+    return (
+      <div className="flex flex-col gap-2 p-2 text-small">
+        <p>
+          このサイト ({url.origin}) でGitLab Quick Navigatorを使用しますか？
+        </p>
+        <Button
+          size="sm"
+          color="primary"
+          onPress={() => chrome.storage.local.set({ [url.origin]: {} })}
+        >
+          有効にする
+        </Button>
+      </div>
+    );
 };
 
 export default App;
