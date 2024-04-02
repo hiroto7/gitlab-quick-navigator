@@ -11,9 +11,10 @@ import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import { Group, Project } from "./types";
 import { useChromeStorage, useCurrentUrl } from "./hooks";
+import { GROUP_FEATURES, PROJECT_FEATURES } from "./lib";
 
 const re =
-  /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+)\/?)?/;
+  /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?/;
 
 const parsePathname = (pathname: string) => {
   const array = re.exec(pathname);
@@ -158,11 +159,11 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
           key={key}
           href={href}
           onPress={() => chrome.tabs.update({ url: href })}
-          description={
-            feature !== undefined
-              ? capitalize(feature).replace("_", " ")
-              : undefined
-          }
+          description={feature
+            ?.replace("_", " ")
+            .split("/")
+            .map(capitalize)
+            .join(" / ")}
           startContent={
             <Avatar
               isBordered
@@ -244,7 +245,14 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
             base: group.web_url,
             name: group.name,
             avatar: group.avatar_url,
-            feature: feature === "project_members" ? "group_members" : feature,
+            feature:
+              feature !== undefined
+                ? feature.startsWith("project_members")
+                  ? "group_members"
+                  : GROUP_FEATURES.findLast((groupFeature) =>
+                      feature.startsWith(groupFeature),
+                    )
+                : undefined,
           })
         ) : (
           <ListboxItem key="skeleton">
@@ -259,7 +267,14 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
             base: project.web_url,
             name: project.name,
             avatar: project.avatar_url,
-            feature: feature === "group_members" ? "project_members" : feature,
+            feature:
+              feature !== undefined
+                ? feature.startsWith("group_members")
+                  ? "project_members"
+                  : PROJECT_FEATURES.findLast((projectFeature) =>
+                      feature.startsWith(projectFeature),
+                    )
+                : undefined,
           }),
         ) ?? (
           <ListboxItem key="skeleton">
