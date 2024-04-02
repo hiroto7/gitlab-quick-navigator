@@ -7,7 +7,7 @@ import {
   ListboxSection,
   Skeleton,
 } from "@nextui-org/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import { Group, Project } from "./types";
 import { useChromeStorage, useCurrentUrl } from "./hooks";
@@ -89,49 +89,6 @@ const getClosestGroup = async <T,>(
   throw AggregateError(errors);
 };
 
-const getListboxItem = ({
-  key,
-  name,
-  avatar,
-  base,
-  feature,
-  search,
-}: {
-  key: string;
-  name: string;
-  avatar: string | null;
-  base: string;
-  feature: string | undefined;
-  search: string;
-}) => {
-  const href = feature !== undefined ? `${base}/-/${feature}${search}` : base;
-
-  return (
-    <ListboxItem
-      key={key}
-      href={href}
-      onPress={() => chrome.tabs.update({ url: href })}
-      description={
-        feature !== undefined
-          ? capitalize(feature).replace("_", " ")
-          : undefined
-      }
-      startContent={
-        <Avatar
-          isBordered
-          radius="sm"
-          size="sm"
-          name={name}
-          {...(avatar !== null ? { src: avatar } : {})}
-          className="flex-shrink-0"
-        />
-      }
-    >
-      {name}
-    </ListboxItem>
-  );
-};
-
 const capitalize = (text: string) =>
   text.slice(0, 1).toUpperCase() + text.slice(1);
 
@@ -178,6 +135,51 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
         }
     })();
   }, [url?.origin, path, token]);
+
+  const getListboxItem = useCallback(
+    ({
+      key,
+      name,
+      avatar,
+      base,
+      feature,
+    }: {
+      key: string;
+      name: string;
+      avatar: string | null;
+      base: string;
+      feature: string | undefined;
+    }) => {
+      const href =
+        feature !== undefined ? `${base}/-/${feature}${url.search}` : base;
+
+      return (
+        <ListboxItem
+          key={key}
+          href={href}
+          onPress={() => chrome.tabs.update({ url: href })}
+          description={
+            feature !== undefined
+              ? capitalize(feature).replace("_", " ")
+              : undefined
+          }
+          startContent={
+            <Avatar
+              isBordered
+              radius="sm"
+              size="sm"
+              name={name}
+              {...(avatar !== null ? { src: avatar } : {})}
+              className="flex-shrink-0"
+            />
+          }
+        >
+          {name}
+        </ListboxItem>
+      );
+    },
+    [url.search],
+  );
 
   if (path === undefined)
     return (
@@ -243,7 +245,6 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
             name: group.name,
             avatar: group.avatar_url,
             feature: feature === "project_members" ? "group_members" : feature,
-            search: url.search,
           })
         ) : (
           <ListboxItem key="skeleton">
@@ -259,7 +260,6 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
             name: project.name,
             avatar: project.avatar_url,
             feature: feature === "group_members" ? "project_members" : feature,
-            search: url.search,
           }),
         ) ?? (
           <ListboxItem key="skeleton">
