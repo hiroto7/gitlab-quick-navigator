@@ -9,9 +9,17 @@ import {
 } from "@nextui-org/react";
 import { useCallback, useEffect, useState } from "react";
 import "./App.css";
-import { Group, Project } from "./types";
 import { useChromeStorage, useCurrentUrl } from "./hooks";
-import { GROUP_FEATURES, PROJECT_FEATURES } from "./lib";
+import {
+  Feature,
+  GROUP_FEATURES,
+  GROUP_FEATURE_NAMES,
+  Group,
+  PROJECT_FEATURES,
+  PROJECT_FEATURE_NAMES,
+  Project,
+  getFeature,
+} from "./lib";
 
 const re =
   /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?/;
@@ -90,9 +98,6 @@ const getClosestGroup = async <T,>(
   throw AggregateError(errors);
 };
 
-const capitalize = (text: string) =>
-  text.slice(0, 1).toUpperCase() + text.slice(1);
-
 const Main: React.FC<{ url: URL; token: string | undefined }> = ({
   url,
   token,
@@ -149,21 +154,17 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
       name: string;
       avatar: string | null;
       base: string;
-      feature: string | undefined;
+      feature: Feature | undefined;
     }) => {
       const href =
-        feature !== undefined ? `${base}/-/${feature}${url.search}` : base;
+        feature !== undefined ? `${base}/-/${feature.path}${url.search}` : base;
 
       return (
         <ListboxItem
           key={key}
           href={href}
           onPress={() => chrome.tabs.update({ url: href })}
-          description={feature
-            ?.replace("_", " ")
-            .split("/")
-            .map(capitalize)
-            .join(" / ")}
+          description={feature?.name}
           startContent={
             <Avatar
               isBordered
@@ -232,6 +233,24 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
       </div>
     );
 
+  const groupFeature =
+    feature !== undefined
+      ? feature.startsWith("project_members")
+        ? "group_members"
+        : GROUP_FEATURES.findLast((groupFeature) =>
+            feature.startsWith(groupFeature),
+          )
+      : undefined;
+
+  const projectFeature =
+    feature !== undefined
+      ? feature.startsWith("group_members")
+        ? "project_members"
+        : PROJECT_FEATURES.findLast((projectFeature) =>
+            feature.startsWith(projectFeature),
+          )
+      : undefined;
+
   return (
     <Listbox
       selectionMode="single"
@@ -246,12 +265,8 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
             name: group.name,
             avatar: group.avatar_url,
             feature:
-              feature !== undefined
-                ? feature.startsWith("project_members")
-                  ? "group_members"
-                  : GROUP_FEATURES.findLast((groupFeature) =>
-                      feature.startsWith(groupFeature),
-                    )
+              groupFeature !== undefined
+                ? getFeature(groupFeature, GROUP_FEATURE_NAMES)
                 : undefined,
           })
         ) : (
@@ -268,12 +283,8 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
             name: project.name,
             avatar: project.avatar_url,
             feature:
-              feature !== undefined
-                ? feature.startsWith("group_members")
-                  ? "project_members"
-                  : PROJECT_FEATURES.findLast((projectFeature) =>
-                      feature.startsWith(projectFeature),
-                    )
+              projectFeature !== undefined
+                ? getFeature(projectFeature, PROJECT_FEATURE_NAMES)
                 : undefined,
           }),
         ) ?? (
