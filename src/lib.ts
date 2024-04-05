@@ -25,15 +25,25 @@ export const GROUP_FEATURES = [
 
   // Plan
   "issues",
+  "epics",
   "boards",
+  "epic_boards",
+  "roadmap",
   "milestones",
+  "cadences",
+  "wikis",
   "crm/contacts",
+  "crm/organizations",
 
   // Code
   "merge_requests",
 
   // Build
   "runners",
+
+  // Secure
+  "security/dashboard",
+  "security/vulnerabilities",
 
   // Deploy
   "packages",
@@ -42,6 +52,10 @@ export const GROUP_FEATURES = [
   // Operate
   "dependency_proxy",
   "infrastructure_registry",
+
+  // Analyze
+  "insights",
+  "issues_analytics",
 
   // Settings
   "edit",
@@ -58,6 +72,9 @@ export const GROUP_FEATURES = [
 ] as const;
 
 export const PROJECT_FEATURES = [
+  "starrers",
+  "forks",
+
   // Manage
   "project_members",
   "labels",
@@ -66,7 +83,9 @@ export const PROJECT_FEATURES = [
   "issues",
   "boards",
   "milestones",
+  "cadences",
   "wikis",
+  "requirements_management/requirements",
 
   // Code
   "merge_requests",
@@ -81,6 +100,7 @@ export const PROJECT_FEATURES = [
   "jobs",
   "ci/editor",
   "pipeline_schedules",
+  "quality/test_cases",
   "artifacts",
 
   // Secure
@@ -110,6 +130,8 @@ export const PROJECT_FEATURES = [
   // Analyze
   "value_stream_analytics",
   "pipelines/charts",
+  "analytics/code_reviews",
+  "analytics/issues_analytics",
   "ml/experiments",
 
   // Settings
@@ -129,10 +151,17 @@ export const GROUP_FEATURE_NAMES: Partial<
   Record<(typeof GROUP_FEATURES)[number], string>
 > = {
   boards: "Issue Boards",
+  roadmap: "Epics Roadmap",
+  cadences: "Iteration cadences",
+  wikis: "Wiki",
   "crm/contacts": "Customer relations contacts",
+  "crm/organizations": "Customer relations organizations",
+  "security/dashboard": "Security Dashboard",
+  "security/vulnerabilities": "Vulnerability Report",
   packages: "Package Registry",
   container_registries: "Container Registry",
   infrastructure_registry: "Terraform Module Registry",
+  issues_analytics: "Issue Analytics",
   edit: "General settings",
   "settings/integrations": "Group-level integration management",
   hooks: "Group Hooks",
@@ -150,14 +179,19 @@ export const PROJECT_FEATURE_NAMES: Partial<
 > = {
   project_members: "Members",
   boards: "Issue Boards",
+  cadences: "Iteration cadences",
   wikis: "Wiki",
+  "requirements_management/requirements": "Requirements",
   branches: "Repository / Branches",
   compare: "Compare revisions",
   "ci/editor": "Pipeline Editor",
   pipeline_schedules: "Schedules",
+  "quality/test_cases": "Test cases",
   "security/discover": "Security capabilities",
   "security/configuration": "Security configuration",
   packages: "Package Registry",
+  "analytics/code_reviews": "Code Review",
+  "analytics/issues_analytics": "Issue Analytics",
   "ml/models": "Model registry",
   clusters: "Kubernetes",
   terraform: "Terraform states",

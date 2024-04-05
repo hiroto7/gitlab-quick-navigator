@@ -233,22 +233,26 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
       </div>
     );
 
-  const groupFeature =
+  const groupFeature: (typeof GROUP_FEATURES)[number] | undefined =
     feature !== undefined
       ? feature.startsWith("project_members")
         ? "group_members"
-        : GROUP_FEATURES.findLast((groupFeature) =>
-            feature.startsWith(groupFeature),
-          )
+        : feature.startsWith("analytics/issues_analytics")
+          ? "issues_analytics"
+          : GROUP_FEATURES.findLast((groupFeature) =>
+              feature.startsWith(groupFeature),
+            )
       : undefined;
 
-  const projectFeature =
+  const projectFeature: (typeof PROJECT_FEATURES)[number] | undefined =
     feature !== undefined
       ? feature.startsWith("group_members")
         ? "project_members"
-        : PROJECT_FEATURES.findLast((projectFeature) =>
-            feature.startsWith(projectFeature),
-          )
+        : feature.startsWith("issues_analytics")
+          ? "analytics/issues_analytics"
+          : PROJECT_FEATURES.findLast((projectFeature) =>
+              feature.startsWith(projectFeature),
+            )
       : undefined;
 
   return (
