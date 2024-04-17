@@ -317,7 +317,13 @@ const App: React.FC = () => {
     return (
       <div className="flex flex-col gap-2 p-2 text-small">
         <p>
-          このサイト ({url.origin}) でGitLab Quick Navigatorを使用しますか？
+          <strong>
+            このサイト ({url.origin}) でGitLab Quick Navigatorを使用しますか？
+          </strong>
+        </p>
+        <p>
+          有効にすると、このサイトでポップアップを開くたびに /api/v4
+          以下のエンドポイントへリクエストが発生します。
         </p>
         <Button
           size="sm"
