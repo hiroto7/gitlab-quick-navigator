@@ -5,16 +5,30 @@ export interface Group {
   web_url: string;
 }
 
+type AccessLevel = "disabled" | "private" | "enabled";
+
 export interface Project {
   avatar_url: string | null;
   name: string;
   path_with_namespace: string;
   web_url: string;
 
-  issues_access_level: "disabled" | "private" | "enabled";
-  merge_requests_access_level: "disabled" | "private" | "enabled";
-  snippets_access_level: "disabled" | "private" | "enabled";
-  wiki_access_level: "disabled" | "private" | "enabled";
+  issues_access_level: AccessLevel;
+  merge_requests_access_level: AccessLevel;
+  snippets_access_level: AccessLevel;
+  wiki_access_level: AccessLevel;
+
+  builds_access_level: AccessLevel;
+
+  analytics_access_level: AccessLevel;
+  environments_access_level: AccessLevel;
+  feature_flags_access_level: AccessLevel;
+  infrastructure_access_level: AccessLevel;
+  model_experiments_access_level: AccessLevel;
+  model_registry_access_level: AccessLevel;
+  monitor_access_level: AccessLevel;
+  releases_access_level: AccessLevel;
+  repository_access_level: AccessLevel;
 
   /** @deprecated */
   issues_enabled: boolean;
@@ -24,6 +38,9 @@ export interface Project {
   snippets_enabled: boolean;
   /** @deprecated */
   wiki_enabled: boolean;
+
+  /** @deprecated */
+  jobs_enabled: boolean;
 }
 
 export interface Feature {
@@ -241,12 +258,54 @@ export const isProjectFeatureAvailable: Partial<
   snippets: (project) => project.snippets_access_level !== "disabled",
   wikis: (project) => project.wiki_access_level !== "disabled",
 
+  value_stream_analytics: (project) =>
+    project.analytics_access_level !== "disabled",
+
+  pipelines: (project) => project.builds_access_level !== "disabled",
+  jobs: (project) => project.builds_access_level !== "disabled",
+  pipeline_schedules: (project) => project.builds_access_level !== "disabled",
+  artifacts: (project) => project.builds_access_level !== "disabled",
+  "settings/ci_cd": (project) => project.builds_access_level !== "disabled",
+
+  clusters: (project) => project.infrastructure_access_level !== "disabled",
+  terraform: (project) => project.infrastructure_access_level !== "disabled",
+  "google_cloud/configuration": (project) =>
+    project.infrastructure_access_level !== "disabled",
+
+  "ml/experiments": (project) =>
+    project.model_experiments_access_level !== "disabled",
+  "ml/models": (project) =>
+    project.model_experiments_access_level !== "disabled",
+
+  error_tracking: (project) => project.monitor_access_level !== "disabled",
+  alert_management: (project) => project.monitor_access_level !== "disabled",
+
+  releases: (project) => project.releases_access_level !== "disabled",
+
+  branches: (project) => project.repository_access_level !== "disabled",
+  commits: (project) => project.repository_access_level !== "disabled",
+  tags: (project) => project.repository_access_level !== "disabled",
+  compare: (project) => project.repository_access_level !== "disabled",
+  "ci/editor": (project) => project.repository_access_level !== "disabled",
+
   labels: (project) =>
     project.issues_access_level !== "disabled" ||
     project.merge_requests_access_level !== "disabled",
   milestones: (project) =>
     project.issues_access_level !== "disabled" ||
     project.merge_requests_access_level !== "disabled",
+
+  environments: (project) =>
+    project.builds_access_level !== "disabled" &&
+    project.environments_access_level !== "disabled",
+
+  feature_flags: (project) =>
+    project.feature_flags_access_level !== "disabled" &&
+    project.repository_access_level !== "disabled",
+
+  "pipelines/charts": (project) =>
+    project.analytics_access_level !== "disabled" &&
+    project.repository_access_level !== "disabled",
 };
 
 const capitalize = <T extends string>(text: T) =>
