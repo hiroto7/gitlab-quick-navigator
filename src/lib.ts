@@ -10,6 +10,20 @@ export interface Project {
   name: string;
   path_with_namespace: string;
   web_url: string;
+
+  issues_access_level: "disabled" | "private" | "enabled";
+  merge_requests_access_level: "disabled" | "private" | "enabled";
+  snippets_access_level: "disabled" | "private" | "enabled";
+  wiki_access_level: "disabled" | "private" | "enabled";
+
+  /** @deprecated */
+  issues_enabled: boolean;
+  /** @deprecated */
+  merge_requests_enabled: boolean;
+  /** @deprecated */
+  snippets_enabled: boolean;
+  /** @deprecated */
+  wiki_enabled: boolean;
 }
 
 export interface Feature {
@@ -211,6 +225,28 @@ export const PROJECT_FEATURE_NAMES: Partial<
   "settings/operations": "Monitor Settings",
   "settings/analytics": "Analytics settings",
   usage_quotas: "Usage",
+};
+
+export const isProjectFeatureAvailable: Partial<
+  Record<(typeof PROJECT_FEATURES)[number], (project: Project) => boolean>
+> = {
+  issues: (project) => project.issues_access_level !== "disabled",
+  boards: (project) => project.issues_access_level !== "disabled",
+  incidents: (project) => project.issues_access_level !== "disabled",
+  "issues/service_desk": (project) =>
+    project.issues_access_level !== "disabled",
+
+  merge_requests: (project) =>
+    project.merge_requests_access_level !== "disabled",
+  snippets: (project) => project.snippets_access_level !== "disabled",
+  wikis: (project) => project.wiki_access_level !== "disabled",
+
+  labels: (project) =>
+    project.issues_access_level !== "disabled" ||
+    project.merge_requests_access_level !== "disabled",
+  milestones: (project) =>
+    project.issues_access_level !== "disabled" ||
+    project.merge_requests_access_level !== "disabled",
 };
 
 const capitalize = <T extends string>(text: T) =>
