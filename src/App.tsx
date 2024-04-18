@@ -19,6 +19,7 @@ import {
   PROJECT_FEATURE_NAMES,
   Project,
   getFeature,
+  isProjectFeatureAvailable,
 } from "./lib";
 
 const re =
@@ -244,17 +245,6 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
             )
       : undefined;
 
-  const projectFeature: (typeof PROJECT_FEATURES)[number] | undefined =
-    feature !== undefined
-      ? feature.startsWith("group_members")
-        ? "project_members"
-        : feature.startsWith("issues_analytics")
-          ? "analytics/issues_analytics"
-          : PROJECT_FEATURES.findLast((projectFeature) =>
-              feature.startsWith(projectFeature),
-            )
-      : undefined;
-
   return (
     <Listbox
       selectionMode="single"
@@ -280,8 +270,24 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
         )}
       </ListboxSection>
       <ListboxSection title="Projects">
-        {projects?.map((project) =>
-          getListboxItem({
+        {projects?.map((project) => {
+          const projectFeature: (typeof PROJECT_FEATURES)[number] | undefined =
+            feature !== undefined
+              ? feature.startsWith("group_members")
+                ? "project_members"
+                : feature.startsWith("issues_analytics")
+                  ? "analytics/issues_analytics"
+                  : PROJECT_FEATURES.findLast(
+                      (projectFeature) =>
+                        (feature.startsWith(projectFeature) &&
+                          isProjectFeatureAvailable[projectFeature]?.(
+                            project,
+                          )) ??
+                        true,
+                    )
+              : undefined;
+
+          return getListboxItem({
             key: project.path_with_namespace,
             base: project.web_url,
             name: project.name,
@@ -290,8 +296,8 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
               projectFeature !== undefined
                 ? getFeature(projectFeature, PROJECT_FEATURE_NAMES)
                 : undefined,
-          }),
-        ) ?? (
+          });
+        }) ?? (
           <ListboxItem key="skeleton">
             <Skeleton className="h-8 w-full" />
           </ListboxItem>
