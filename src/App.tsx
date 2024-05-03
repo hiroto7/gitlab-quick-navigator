@@ -7,7 +7,7 @@ import {
   ListboxSection,
   Skeleton,
 } from "@nextui-org/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import "./App.css";
 import { useChromeStorage, useCurrentUrl } from "./hooks";
 import {
@@ -21,6 +21,7 @@ import {
   getFeature,
   isProjectFeatureAvailable,
 } from "./lib";
+import useSWR, { Cache, SWRConfig, State } from "swr";
 
 const re =
   /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?/;
@@ -31,117 +32,113 @@ const parsePathname = (pathname: string) => {
   return { path, feature };
 };
 
-const requestJson = async (
-  url: URL,
+const fetcher = async (url: string, token: string | undefined) => {
+  const response =
+    token !== undefined
+      ? await fetch(url, { headers: { "PRIVATE-TOKEN": token } })
+      : await fetch(url);
+
+  const json: unknown = await response.json();
+  if (!response.ok) throw json;
+  return json;
+};
+
+const useGroupDetail = (
+  origin: string,
+  path: string | undefined,
   token: string | undefined,
-): Promise<unknown> => {
-  const headers = token !== undefined ? { "PRIVATE-TOKEN": token } : undefined;
-  const response = await fetch(
-    url,
-    headers !== undefined ? { headers } : undefined,
+) => {
+  const { data, error } = useSWR(
+    path !== undefined && [
+      `${origin}/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`,
+      token,
+    ],
+    (args) => fetcher(...args),
   );
 
-  if (response.ok) {
-    return await response.json();
-  } else {
-    const text = await response.text();
-    try {
-      throw JSON.parse(text);
-    } catch {
-      throw text;
-    }
-  }
+  return { group: data as Group | undefined, error };
 };
 
-const fetchGroupDetail = async (
+const useGroupProjects = (
   origin: string,
-  path: string,
+  path: string | undefined,
   token: string | undefined,
 ) => {
-  const encodedPath = encodeURIComponent(path);
-  return (await requestJson(
-    new URL(`/api/v4/groups/${encodedPath}?with_projects=false`, origin),
-    token,
-  )) as Group;
+  const { data, error } = useSWR(
+    path !== undefined && [
+      `${origin}/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`,
+      token,
+    ],
+    (args) => fetcher(...args),
+  );
+
+  return { projects: data as Project[] | undefined, error };
 };
 
-const fetchGroupProjects = async (
+const useClosestGroupDetail = (
   origin: string,
-  path: string,
+  path: string | undefined,
   token: string | undefined,
 ) => {
-  const encodedPath = encodeURIComponent(path);
-  return (await requestJson(
-    new URL(
-      `/api/v4/groups/${encodedPath}/projects?order_by=last_activity_at`,
-      origin,
-    ),
+  const parent = path !== undefined ? getParent(path) : undefined;
+  const { group, error } = useGroupDetail(origin, path, token);
+  const { group: parentGroup, error: parentError } = useGroupDetail(
+    origin,
+    error !== undefined ? parent : undefined,
     token,
-  )) as Project[];
+  );
+
+  if (error === undefined || parent === undefined) return { group, error };
+  else if (parentError === undefined)
+    return { group: parentGroup, error: parentError };
+  else
+    return {
+      group: parentGroup,
+      error: new AggregateError([error, parentError]),
+    };
 };
 
-const parent = (path: string) => path.split("/").slice(0, -1).join("/");
-
-const getClosestGroup = async <T,>(
-  fetcher: (path: string) => Promise<T>,
-  path: string,
+const useClosestGroupProjects = (
+  origin: string,
+  path: string | undefined,
+  token: string | undefined,
 ) => {
-  const paths = path.includes("/") ? [path, parent(path)] : [path];
-  const errors: unknown[] = [];
+  const parent = path !== undefined ? getParent(path) : undefined;
+  const { projects, error } = useGroupProjects(origin, path, token);
+  const { projects: parentProjects, error: parentError } = useGroupProjects(
+    origin,
+    error !== undefined ? parent : undefined,
+    token,
+  );
 
-  for (const path of paths)
-    try {
-      return await fetcher(path);
-    } catch (error) {
-      errors.push(error);
-    }
-
-  throw AggregateError(errors);
+  if (error === undefined || parent === undefined) return { projects, error };
+  else if (parentError === undefined)
+    return { projects: parentProjects, error: undefined };
+  else
+    return {
+      projects: parentProjects,
+      error: new AggregateError([error, parentError]),
+    };
 };
 
+const getParent = (path: string) =>
+  path.includes("/") ? path.split("/").slice(0, -1).join("/") : undefined;
 const Main: React.FC<{ url: URL; token: string | undefined }> = ({
   url,
   token,
 }) => {
-  const [error, setError] = useState(false);
-  const [group, setGroup] = useState<Group>();
-  const [projects, setProjects] = useState<Project[]>();
-
   const { path, feature } = parsePathname(url.pathname);
 
-  useEffect(() => {
-    (async () => {
-      setError(false);
-      if (path !== undefined)
-        try {
-          const group = await getClosestGroup(
-            (path) => fetchGroupDetail(url.origin, path, token),
-            path,
-          );
-          setGroup(group);
-        } catch (error) {
-          console.error(error);
-          setError(true);
-        }
-    })();
-  }, [url.origin, path, token]);
-
-  useEffect(() => {
-    (async () => {
-      setError(false);
-      if (path !== undefined)
-        try {
-          const projects = await getClosestGroup(
-            (path) => fetchGroupProjects(url.origin, path, token),
-            path,
-          );
-          setProjects(projects);
-        } catch (error) {
-          console.error(error);
-          setError(true);
-        }
-    })();
-  }, [url?.origin, path, token]);
+  const { group, error: groupError } = useClosestGroupDetail(
+    url.origin,
+    path,
+    token,
+  );
+  const { projects, error: projectsError } = useClosestGroupProjects(
+    url.origin,
+    path,
+    token,
+  );
 
   const getListboxItem = useCallback(
     ({
@@ -194,7 +191,7 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
         </p>
       </div>
     );
-  if (error)
+  if (groupError || projectsError)
     return (
       <div className="flex flex-col gap-2 p-2 text-small">
         <p>
@@ -307,18 +304,41 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
   );
 };
 
+const getProvider = (stored: Record<string, State>) => (): Cache => {
+  const map = new Map(Object.entries(stored));
+  return {
+    keys: map.keys.bind(map),
+    get: map.get.bind(map),
+    set: (key, value) => {
+      map.set(key, value);
+      chrome.storage.session.set({ [key]: value });
+    },
+    delete: (key) => {
+      map.delete(key);
+      chrome.storage.session.remove(key);
+    },
+  };
+};
+
 const App: React.FC = () => {
   const url = useCurrentUrl();
-  const options = useChromeStorage("local") as
+  const options = useChromeStorage("local", true) as
     | Record<string, { token?: string }>
     | undefined;
+  const cache = useChromeStorage("session", false) as
+    | Record<string, State>
+    | undefined;
 
-  if (url === undefined || options === undefined) return;
+  if (url === undefined || options === undefined || cache === undefined) return;
 
   const siteOptions = options[url.origin];
 
   if (siteOptions !== undefined)
-    return <Main url={url} token={siteOptions.token} />;
+    return (
+      <SWRConfig value={{ provider: getProvider(cache) }}>
+        <Main url={url} token={siteOptions.token} />
+      </SWRConfig>
+    );
   else
     return (
       <div className="flex flex-col gap-2 p-2 text-small">

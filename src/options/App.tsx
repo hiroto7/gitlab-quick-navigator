@@ -2,7 +2,7 @@ import { Button, Listbox, ListboxItem } from "@nextui-org/react";
 import { useChromeStorage } from "../hooks";
 
 const App: React.FC = () => {
-  const options = useChromeStorage("local") as
+  const options = useChromeStorage("local", true) as
     | Record<string, { token?: string }>
     | undefined;
 
