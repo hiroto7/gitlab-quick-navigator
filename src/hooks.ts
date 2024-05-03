@@ -33,7 +33,10 @@ export const useCurrentUrl = () => {
   return url;
 };
 
-export const useChromeStorage = (area: chrome.storage.AreaName) => {
+export const useChromeStorage = (
+  area: chrome.storage.AreaName,
+  watch: boolean,
+) => {
   const [items, setItems] = useState<Record<string, unknown>>();
 
   const load = useCallback(async () => {
@@ -46,9 +49,10 @@ export const useChromeStorage = (area: chrome.storage.AreaName) => {
   }, [load]);
 
   useEffect(() => {
+    if (!watch) return;
     chrome.storage[area].onChanged.addListener(load);
     return () => chrome.storage[area].onChanged.removeListener(load);
-  }, [area, load]);
+  }, [area, load, watch]);
 
   return items;
 };
