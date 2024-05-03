@@ -277,6 +277,7 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
         selectionMode="single"
         selectedKeys={[path]}
         disabledKeys={["skeleton"]}
+        aria-label="Group and Projects"
       >
         <ListboxSection title="Group" showDivider>
           {group !== undefined ? (
@@ -291,7 +292,7 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
                   : undefined,
             })
           ) : (
-            <ListboxItem key="skeleton">
+            <ListboxItem key="skeleton" textValue="Loading...">
               <Skeleton className="h-8 w-full" />
             </ListboxItem>
           )}
@@ -327,7 +328,7 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
                   : undefined,
             });
           }) ?? (
-            <ListboxItem key="skeleton">
+            <ListboxItem key="skeleton" textValue="Loading...">
               <Skeleton className="h-8 w-full" />
             </ListboxItem>
           )}
