@@ -330,7 +330,9 @@ const App: React.FC = () => {
 
   if (siteOptions !== undefined)
     return (
-      <SWRConfig value={{ provider: getProvider(cache) }}>
+      <SWRConfig
+        value={{ provider: getProvider(cache), shouldRetryOnError: false }}
+      >
         <Main url={url} token={siteOptions.token} />
       </SWRConfig>
     );
