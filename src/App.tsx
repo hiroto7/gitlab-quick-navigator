@@ -22,7 +22,7 @@ import {
   getFeature,
   isProjectFeatureAvailable,
 } from "./lib";
-import useSWR, { Cache, SWRConfig, SWRResponse, State } from "swr";
+import useSWR, { Cache, SWRConfig, State } from "swr";
 
 const re =
   /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?/;
@@ -33,7 +33,12 @@ const parsePathname = (pathname: string) => {
   return { path, feature };
 };
 
-const fetcher = async (url: string, token: string | undefined) => {
+const fetcher = async <T,>(
+  origin: string,
+  path: string,
+  token: string | undefined,
+) => {
+  const url = new URL(path, origin);
   const response =
     token !== undefined
       ? await fetch(url, { headers: { "PRIVATE-TOKEN": token } })
@@ -41,54 +46,39 @@ const fetcher = async (url: string, token: string | undefined) => {
 
   const json: unknown = await response.json();
   if (!response.ok) throw json;
-  return json;
+  return json as T;
 };
 
-const useGroupDetail = (
-  origin: string,
-  path: string | undefined,
-  token: string | undefined,
-): Pick<SWRResponse<Group>, "data" | "error" | "isValidating"> => {
-  const { data, error, isValidating } = useSWR(
-    path !== undefined && [
-      `${origin}/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`,
-      token,
-    ],
-    (args) => fetcher(...args),
-  );
+const groupDetailEndpoint = (path: string) =>
+  `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
 
-  return { data: data as Group | undefined, error, isValidating };
-};
-
-const useGroupProjects = (
-  origin: string,
-  path: string | undefined,
-  token: string | undefined,
-): Pick<SWRResponse<Project[]>, "data" | "error" | "isValidating"> => {
-  const { data, error, isValidating } = useSWR(
-    path !== undefined && [
-      `${origin}/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`,
-      token,
-    ],
-    (args) => fetcher(...args),
-  );
-
-  return { data: data as Project[] | undefined, error, isValidating };
-};
+const groupProjectsEndpoint = (path: string) =>
+  `/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`;
 
 const useClosestGroup = <T,>(
-  useGroup: (
-    path: string | undefined,
-  ) => Pick<SWRResponse<T>, "data" | "error" | "isValidating">,
+  getEndpoint: (path: string) => string,
+  origin: string,
   path: string | undefined,
+  token: string | undefined,
 ) => {
   const parent = path !== undefined ? getParent(path) : undefined;
-  const { data, error, isValidating: isBaseValidating } = useGroup(path);
+  const {
+    data,
+    error,
+    isValidating: isBaseValidating,
+  } = useSWR(
+    path !== undefined && [origin, getEndpoint(path), token],
+    ([origin, path, token]) => fetcher<T>(origin, path, token),
+  );
   const {
     data: parentData,
     error: parentError,
     isValidating: isParentValidating,
-  } = useGroup(error !== undefined ? parent : undefined);
+  } = useSWR(
+    error !== undefined &&
+      parent !== undefined && [origin, getEndpoint(parent), token],
+    ([origin, path, token]) => fetcher<T>(origin, path, token),
+  );
 
   const isValidating = isBaseValidating || isParentValidating;
 
@@ -107,6 +97,7 @@ const useClosestGroup = <T,>(
 
 const getParent = (path: string) =>
   path.includes("/") ? path.split("/").slice(0, -1).join("/") : undefined;
+
 const Main: React.FC<{ url: URL; token: string | undefined }> = ({
   url,
   token,
@@ -117,14 +108,16 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
     data: group,
     error: groupError,
     isValidating: isGroupValidating,
-  } = useClosestGroup((path) => useGroupDetail(url.origin, path, token), path);
+  } = useClosestGroup<Group>(groupDetailEndpoint, url.origin, path, token);
   const {
     data: projects,
     error: projectsError,
     isValidating: isProjectsValidating,
-  } = useClosestGroup(
-    (path) => useGroupProjects(url.origin, path, token),
+  } = useClosestGroup<Project[]>(
+    groupProjectsEndpoint,
+    url.origin,
     path,
+    token,
   );
 
   const getListboxItem = useCallback(
