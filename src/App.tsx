@@ -5,6 +5,7 @@ import {
   Listbox,
   ListboxItem,
   ListboxSection,
+  Progress,
   Skeleton,
 } from "@nextui-org/react";
 import { useCallback } from "react";
@@ -48,7 +49,7 @@ const useGroupDetail = (
   path: string | undefined,
   token: string | undefined,
 ) => {
-  const { data, error } = useSWR(
+  const { data, error, isValidating } = useSWR(
     path !== undefined && [
       `${origin}/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`,
       token,
@@ -56,7 +57,7 @@ const useGroupDetail = (
     (args) => fetcher(...args),
   );
 
-  return { group: data as Group | undefined, error };
+  return { group: data as Group | undefined, error, isValidating };
 };
 
 const useGroupProjects = (
@@ -64,7 +65,7 @@ const useGroupProjects = (
   path: string | undefined,
   token: string | undefined,
 ) => {
-  const { data, error } = useSWR(
+  const { data, error, isValidating } = useSWR(
     path !== undefined && [
       `${origin}/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`,
       token,
@@ -72,7 +73,7 @@ const useGroupProjects = (
     (args) => fetcher(...args),
   );
 
-  return { projects: data as Project[] | undefined, error };
+  return { projects: data as Project[] | undefined, error, isValidating };
 };
 
 const useClosestGroupDetail = (
@@ -81,20 +82,29 @@ const useClosestGroupDetail = (
   token: string | undefined,
 ) => {
   const parent = path !== undefined ? getParent(path) : undefined;
-  const { group, error } = useGroupDetail(origin, path, token);
-  const { group: parentGroup, error: parentError } = useGroupDetail(
-    origin,
-    error !== undefined ? parent : undefined,
-    token,
-  );
+  const {
+    group,
+    error,
+    isValidating: isBaseValidating,
+  } = useGroupDetail(origin, path, token);
+  const {
+    group: parentGroup,
+    error: parentError,
+    isValidating: isParentValidating,
+  } = useGroupDetail(origin, error !== undefined ? parent : undefined, token);
 
-  if (error === undefined || parent === undefined) return { group, error };
-  else if (parentError === undefined)
-    return { group: parentGroup, error: parentError };
+  const isValidating = isBaseValidating || isParentValidating;
+
+  if (error === undefined || parent === undefined)
+    return { group, error, isValidating };
   else
     return {
       group: parentGroup,
-      error: new AggregateError([error, parentError]),
+      error:
+        parentError === undefined
+          ? undefined
+          : new AggregateError([error, parentError]),
+      isValidating,
     };
 };
 
@@ -104,20 +114,29 @@ const useClosestGroupProjects = (
   token: string | undefined,
 ) => {
   const parent = path !== undefined ? getParent(path) : undefined;
-  const { projects, error } = useGroupProjects(origin, path, token);
-  const { projects: parentProjects, error: parentError } = useGroupProjects(
-    origin,
-    error !== undefined ? parent : undefined,
-    token,
-  );
+  const {
+    projects,
+    error,
+    isValidating: isBaseValidating,
+  } = useGroupProjects(origin, path, token);
+  const {
+    projects: parentProjects,
+    error: parentError,
+    isValidating: isParentValidating,
+  } = useGroupProjects(origin, error !== undefined ? parent : undefined, token);
 
-  if (error === undefined || parent === undefined) return { projects, error };
-  else if (parentError === undefined)
-    return { projects: parentProjects, error: undefined };
+  const isValidating = isBaseValidating || isParentValidating;
+
+  if (error === undefined || parent === undefined)
+    return { projects, error, isValidating };
   else
     return {
       projects: parentProjects,
-      error: new AggregateError([error, parentError]),
+      error:
+        parentError === undefined
+          ? undefined
+          : new AggregateError([error, parentError]),
+      isValidating,
     };
 };
 
@@ -129,16 +148,16 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
 }) => {
   const { path, feature } = parsePathname(url.pathname);
 
-  const { group, error: groupError } = useClosestGroupDetail(
-    url.origin,
-    path,
-    token,
-  );
-  const { projects, error: projectsError } = useClosestGroupProjects(
-    url.origin,
-    path,
-    token,
-  );
+  const {
+    group,
+    error: groupError,
+    isValidating: isGroupValidating,
+  } = useClosestGroupDetail(url.origin, path, token);
+  const {
+    projects,
+    error: projectsError,
+    isValidating: isProjectsValidating,
+  } = useClosestGroupProjects(url.origin, path, token);
 
   const getListboxItem = useCallback(
     ({
@@ -243,64 +262,78 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
       : undefined;
 
   return (
-    <Listbox
-      selectionMode="single"
-      selectedKeys={[path]}
-      disabledKeys={["skeleton"]}
-    >
-      <ListboxSection title="Group" showDivider>
-        {group !== undefined ? (
-          getListboxItem({
-            key: group.full_path,
-            base: group.web_url,
-            name: group.name,
-            avatar: group.avatar_url,
-            feature:
-              groupFeature !== undefined
-                ? getFeature(groupFeature, GROUP_FEATURE_NAMES)
-                : undefined,
-          })
-        ) : (
-          <ListboxItem key="skeleton">
-            <Skeleton className="h-8 w-full" />
-          </ListboxItem>
-        )}
-      </ListboxSection>
-      <ListboxSection title="Projects">
-        {projects?.map((project) => {
-          const projectFeature: (typeof PROJECT_FEATURES)[number] | undefined =
-            feature !== undefined
-              ? feature.startsWith("group_members")
-                ? "project_members"
-                : feature.startsWith("issues_analytics")
-                  ? "analytics/issues_analytics"
-                  : PROJECT_FEATURES.findLast(
-                      (projectFeature) =>
-                        (feature.startsWith(projectFeature) &&
-                          isProjectFeatureAvailable[projectFeature]?.(
-                            project,
-                          )) ??
-                        true,
-                    )
-              : undefined;
+    <>
+      <Progress
+        size="sm"
+        color="default"
+        radius="none"
+        isIndeterminate
+        className={
+          !isGroupValidating && !isProjectsValidating ? "invisible" : undefined
+        }
+        aria-label="Loading..."
+      />
+      <Listbox
+        selectionMode="single"
+        selectedKeys={[path]}
+        disabledKeys={["skeleton"]}
+      >
+        <ListboxSection title="Group" showDivider>
+          {group !== undefined ? (
+            getListboxItem({
+              key: group.full_path,
+              base: group.web_url,
+              name: group.name,
+              avatar: group.avatar_url,
+              feature:
+                groupFeature !== undefined
+                  ? getFeature(groupFeature, GROUP_FEATURE_NAMES)
+                  : undefined,
+            })
+          ) : (
+            <ListboxItem key="skeleton">
+              <Skeleton className="h-8 w-full" />
+            </ListboxItem>
+          )}
+        </ListboxSection>
+        <ListboxSection title="Projects">
+          {projects?.map((project) => {
+            const projectFeature:
+              | (typeof PROJECT_FEATURES)[number]
+              | undefined =
+              feature !== undefined
+                ? feature.startsWith("group_members")
+                  ? "project_members"
+                  : feature.startsWith("issues_analytics")
+                    ? "analytics/issues_analytics"
+                    : PROJECT_FEATURES.findLast(
+                        (projectFeature) =>
+                          (feature.startsWith(projectFeature) &&
+                            isProjectFeatureAvailable[projectFeature]?.(
+                              project,
+                            )) ??
+                          true,
+                      )
+                : undefined;
 
-          return getListboxItem({
-            key: project.path_with_namespace,
-            base: project.web_url,
-            name: project.name,
-            avatar: project.avatar_url,
-            feature:
-              projectFeature !== undefined
-                ? getFeature(projectFeature, PROJECT_FEATURE_NAMES)
-                : undefined,
-          });
-        }) ?? (
-          <ListboxItem key="skeleton">
-            <Skeleton className="h-8 w-full" />
-          </ListboxItem>
-        )}
-      </ListboxSection>
-    </Listbox>
+            return getListboxItem({
+              key: project.path_with_namespace,
+              base: project.web_url,
+              name: project.name,
+              avatar: project.avatar_url,
+              feature:
+                projectFeature !== undefined
+                  ? getFeature(projectFeature, PROJECT_FEATURE_NAMES)
+                  : undefined,
+            });
+          }) ?? (
+            <ListboxItem key="skeleton">
+              <Skeleton className="h-8 w-full" />
+            </ListboxItem>
+          )}
+        </ListboxSection>
+      </Listbox>
+    </>
   );
 };
 
