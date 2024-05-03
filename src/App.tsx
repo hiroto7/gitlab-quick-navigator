@@ -22,7 +22,7 @@ import {
   getFeature,
   isProjectFeatureAvailable,
 } from "./lib";
-import useSWR, { Cache, SWRConfig, State } from "swr";
+import useSWR, { Cache, SWRConfig, SWRResponse, State } from "swr";
 
 const re =
   /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?/;
@@ -48,7 +48,7 @@ const useGroupDetail = (
   origin: string,
   path: string | undefined,
   token: string | undefined,
-) => {
+): Pick<SWRResponse<Group>, "data" | "error" | "isValidating"> => {
   const { data, error, isValidating } = useSWR(
     path !== undefined && [
       `${origin}/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`,
@@ -57,14 +57,14 @@ const useGroupDetail = (
     (args) => fetcher(...args),
   );
 
-  return { group: data as Group | undefined, error, isValidating };
+  return { data: data as Group | undefined, error, isValidating };
 };
 
 const useGroupProjects = (
   origin: string,
   path: string | undefined,
   token: string | undefined,
-) => {
+): Pick<SWRResponse<Project[]>, "data" | "error" | "isValidating"> => {
   const { data, error, isValidating } = useSWR(
     path !== undefined && [
       `${origin}/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`,
@@ -73,65 +73,30 @@ const useGroupProjects = (
     (args) => fetcher(...args),
   );
 
-  return { projects: data as Project[] | undefined, error, isValidating };
+  return { data: data as Project[] | undefined, error, isValidating };
 };
 
-const useClosestGroupDetail = (
-  origin: string,
+const useClosestGroup = <T,>(
+  useGroup: (
+    path: string | undefined,
+  ) => Pick<SWRResponse<T>, "data" | "error" | "isValidating">,
   path: string | undefined,
-  token: string | undefined,
 ) => {
   const parent = path !== undefined ? getParent(path) : undefined;
+  const { data, error, isValidating: isBaseValidating } = useGroup(path);
   const {
-    group,
-    error,
-    isValidating: isBaseValidating,
-  } = useGroupDetail(origin, path, token);
-  const {
-    group: parentGroup,
+    data: parentData,
     error: parentError,
     isValidating: isParentValidating,
-  } = useGroupDetail(origin, error !== undefined ? parent : undefined, token);
+  } = useGroup(error !== undefined ? parent : undefined);
 
   const isValidating = isBaseValidating || isParentValidating;
 
   if (error === undefined || parent === undefined)
-    return { group, error, isValidating };
+    return { data, error, isValidating };
   else
     return {
-      group: parentGroup,
-      error:
-        parentError === undefined
-          ? undefined
-          : new AggregateError([error, parentError]),
-      isValidating,
-    };
-};
-
-const useClosestGroupProjects = (
-  origin: string,
-  path: string | undefined,
-  token: string | undefined,
-) => {
-  const parent = path !== undefined ? getParent(path) : undefined;
-  const {
-    projects,
-    error,
-    isValidating: isBaseValidating,
-  } = useGroupProjects(origin, path, token);
-  const {
-    projects: parentProjects,
-    error: parentError,
-    isValidating: isParentValidating,
-  } = useGroupProjects(origin, error !== undefined ? parent : undefined, token);
-
-  const isValidating = isBaseValidating || isParentValidating;
-
-  if (error === undefined || parent === undefined)
-    return { projects, error, isValidating };
-  else
-    return {
-      projects: parentProjects,
+      data: parentData,
       error:
         parentError === undefined
           ? undefined
@@ -149,15 +114,18 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
   const { path, feature } = parsePathname(url.pathname);
 
   const {
-    group,
+    data: group,
     error: groupError,
     isValidating: isGroupValidating,
-  } = useClosestGroupDetail(url.origin, path, token);
+  } = useClosestGroup((path) => useGroupDetail(url.origin, path, token), path);
   const {
-    projects,
+    data: projects,
     error: projectsError,
     isValidating: isProjectsValidating,
-  } = useClosestGroupProjects(url.origin, path, token);
+  } = useClosestGroup(
+    (path) => useGroupProjects(url.origin, path, token),
+    path,
+  );
 
   const getListboxItem = useCallback(
     ({
