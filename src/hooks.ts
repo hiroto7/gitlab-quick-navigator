@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 export const useCurrentUrl = () => {
   const [href, setHref] = useState<string>();
+  const [currentTabId, setCurrentTabId] = useState<number>();
   const url = useMemo(
     () => (href !== undefined ? new URL(href) : undefined),
     [href],
@@ -13,16 +14,18 @@ export const useCurrentUrl = () => {
         active: true,
         currentWindow: true,
       });
-
-      setHref(tabs[0]?.url);
+      const tab = tabs[0];
+      setHref(tab?.url);
+      setCurrentTabId(tab?.id);
     })();
   }, []);
 
   useEffect(() => {
     const callback = (
-      _tabId: number,
+      updatedTabId: number,
       changeInfo: chrome.tabs.TabChangeInfo,
     ) => {
+      if (updatedTabId !== currentTabId) return;
       if (changeInfo.url !== undefined) setHref(changeInfo.url);
     };
 
