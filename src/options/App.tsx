@@ -35,7 +35,7 @@ const App: React.FC = () => {
                       `${origin} でGitLab Quick Navigatorを無効化すると、設定したアクセストークンも削除されます。`,
                     )
                   )
-                    chrome.storage.local.remove(origin);
+                    void chrome.storage.local.remove(origin);
                 }}
                 className="flex-shrink-0"
               >

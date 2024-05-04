@@ -8,7 +8,7 @@ import {
   Progress,
   Skeleton,
 } from "@nextui-org/react";
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 import "./App.css";
 import { useChromeStorage, useCurrentUrl } from "./hooks";
 import {
@@ -66,7 +66,7 @@ const useClosestGroup = <T,>(
     data,
     error,
     isValidating: isBaseValidating,
-  } = useSWR(
+  } = useSWR<T, unknown, false | [string, string, string | undefined]>(
     path !== undefined && [origin, getEndpoint(path), token],
     ([origin, path, token]) => fetcher<T>(origin, path, token),
   );
@@ -74,7 +74,7 @@ const useClosestGroup = <T,>(
     data: parentData,
     error: parentError,
     isValidating: isParentValidating,
-  } = useSWR(
+  } = useSWR<T, unknown, false | [string, string, string | undefined]>(
     error !== undefined &&
       parent !== undefined && [origin, getEndpoint(parent), token],
     ([origin, path, token]) => fetcher<T>(origin, path, token),
@@ -141,7 +141,7 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
         <ListboxItem
           key={key}
           href={href}
-          onPress={() => chrome.tabs.update({ url: href })}
+          onPress={() => void chrome.tabs.update({ url: href })}
           description={feature?.name}
           startContent={
             <Avatar
@@ -185,13 +185,13 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
         <Button
           size="sm"
           color="primary"
-          onPress={async () => {
+          onPress={() => {
             const token = prompt(
               `${url.origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。`,
             );
             if (token === null) return;
 
-            await chrome.storage.local.set({
+            void chrome.storage.local.set({
               [url.origin]: token !== "" ? { token } : {},
             });
           }}
@@ -306,11 +306,11 @@ const getProvider = (stored: Record<string, State>) => (): Cache => {
     get: map.get.bind(map),
     set: (key, value) => {
       map.set(key, value);
-      chrome.storage.session.set({ [key]: value });
+      void chrome.storage.session.set({ [key]: value });
     },
     delete: (key) => {
       map.delete(key);
-      chrome.storage.session.remove(key);
+      void chrome.storage.session.remove(key);
     },
   };
 };
@@ -351,7 +351,7 @@ const App: React.FC = () => {
         <Button
           size="sm"
           color="primary"
-          onPress={() => chrome.storage.local.set({ [url.origin]: {} })}
+          onPress={() => void chrome.storage.local.set({ [url.origin]: {} })}
         >
           有効にする
         </Button>
