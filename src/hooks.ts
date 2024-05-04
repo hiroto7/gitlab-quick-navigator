@@ -9,7 +9,7 @@ export const useCurrentUrl = () => {
   );
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       const tabs = await chrome.tabs.query({
         active: true,
         currentWindow: true,
@@ -30,7 +30,9 @@ export const useCurrentUrl = () => {
     };
 
     chrome.tabs.onUpdated.addListener(callback);
-    return () => chrome.tabs.onUpdated.removeListener(callback);
+    return () => {
+      chrome.tabs.onUpdated.removeListener(callback);
+    };
   });
 
   return url;
@@ -47,14 +49,14 @@ export const useChromeStorage = (
     setItems(items);
   }, [area]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => void load(), [load]);
 
   useEffect(() => {
     if (!watch) return;
-    chrome.storage[area].onChanged.addListener(load);
-    return () => chrome.storage[area].onChanged.removeListener(load);
+    chrome.storage[area].onChanged.addListener(() => void load());
+    return () => {
+      chrome.storage[area].onChanged.removeListener(() => void load());
+    };
   }, [area, load, watch]);
 
   return items;
