@@ -264,11 +264,14 @@ const App: React.FC = () => {
   const { path, feature } = parsePathname(url.pathname);
   if (path === undefined)
     return (
-      <div className="p-2 text-small">
+      <div className="flex flex-col gap-2 p-2 text-small">
         <p>
           <strong className="text-danger">
-            このページはGitLab上のGroupでもProjectでもありません。
+            このページのURLからGroupまたはProjectを特定できません。
           </strong>
+        </p>
+        <p>
+          GitLab上のGroupまたはProjectのページでポップアップを開いてください。
         </p>
       </div>
     );
