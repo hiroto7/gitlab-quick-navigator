@@ -10,7 +10,7 @@ import {
 } from "@nextui-org/react";
 import React, { useCallback } from "react";
 import "./App.css";
-import { useChromeStorage, useCurrentUrl } from "./hooks";
+import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
 import {
   Feature,
   GROUP_FEATURES,
@@ -22,7 +22,6 @@ import {
   getFeature,
   isProjectFeatureAvailable,
 } from "./lib";
-import useSWR, { Cache, SWRConfig, State } from "swr";
 
 const re =
   /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?/;
@@ -33,77 +32,18 @@ const parsePathname = (pathname: string) => {
   return { path, feature };
 };
 
-const fetcher = async <T,>(
-  origin: string,
-  path: string,
-  token: string | undefined,
-) => {
-  const url = new URL(path, origin);
-  const response =
-    token !== undefined
-      ? await fetch(url, { headers: { "PRIVATE-TOKEN": token } })
-      : await fetch(url);
-
-  const json: unknown = await response.json();
-  if (!response.ok) throw json;
-  return json as T;
-};
-
 const groupDetailEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
 
 const groupProjectsEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`;
 
-const useClosestGroup = <T,>(
-  getEndpoint: (path: string) => string,
-  origin: string,
-  path: string | undefined,
-  token: string | undefined,
-) => {
-  const parent = path !== undefined ? getParent(path) : undefined;
-  const {
-    data,
-    error,
-    isValidating: isBaseValidating,
-  } = useSWR<T, unknown, false | [string, string, string | undefined]>(
-    path !== undefined && [origin, getEndpoint(path), token],
-    ([origin, path, token]) => fetcher<T>(origin, path, token),
-  );
-  const {
-    data: parentData,
-    error: parentError,
-    isValidating: isParentValidating,
-  } = useSWR<T, unknown, false | [string, string, string | undefined]>(
-    error !== undefined &&
-      parent !== undefined && [origin, getEndpoint(parent), token],
-    ([origin, path, token]) => fetcher<T>(origin, path, token),
-  );
-
-  const isValidating = isBaseValidating || isParentValidating;
-
-  if (error === undefined || parent === undefined)
-    return { data, error, isValidating };
-  else
-    return {
-      data: parentData,
-      error:
-        parentError === undefined
-          ? undefined
-          : new AggregateError([error, parentError]),
-      isValidating,
-    };
-};
-
-const getParent = (path: string) =>
-  path.includes("/") ? path.split("/").slice(0, -1).join("/") : undefined;
-
-const Main: React.FC<{ url: URL; token: string | undefined }> = ({
-  url,
-  token,
-}) => {
-  const { path, feature } = parsePathname(url.pathname);
-
+const Main: React.FC<{
+  url: URL;
+  token: string | undefined;
+  path: string;
+  feature: string | undefined;
+}> = ({ url, token, path, feature }) => {
   const {
     data: group,
     error: groupError,
@@ -161,16 +101,6 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
     [url.search],
   );
 
-  if (path === undefined)
-    return (
-      <div className="p-2 text-small">
-        <p>
-          <strong className="text-danger">
-            このページはGitLab上のGroupでもProjectでもありません。
-          </strong>
-        </p>
-      </div>
-    );
   if (groupError || projectsError)
     return (
       <div className="flex flex-col gap-2 p-2 text-small">
@@ -299,44 +229,17 @@ const Main: React.FC<{ url: URL; token: string | undefined }> = ({
   );
 };
 
-const getProvider = (stored: Record<string, State>) => (): Cache => {
-  const map = new Map(Object.entries(stored));
-  return {
-    keys: map.keys.bind(map),
-    get: map.get.bind(map),
-    set: (key, value) => {
-      map.set(key, value);
-      void chrome.storage.session.set({ [key]: value });
-    },
-    delete: (key) => {
-      map.delete(key);
-      void chrome.storage.session.remove(key);
-    },
-  };
-};
-
 const App: React.FC = () => {
   const url = useCurrentUrl();
-  const options = useChromeStorage("local", true) as
-    | Record<string, { token?: string }>
-    | undefined;
-  const cache = useChromeStorage("session", false) as
-    | Record<string, State>
-    | undefined;
+  const options = useChromeStorage<Record<string, { token?: string }>>(
+    "local",
+    true,
+  );
 
-  if (url === undefined || options === undefined || cache === undefined) return;
+  if (url === undefined || options === undefined) return;
 
   const siteOptions = options[url.origin];
-
-  if (siteOptions !== undefined)
-    return (
-      <SWRConfig
-        value={{ provider: getProvider(cache), shouldRetryOnError: false }}
-      >
-        <Main url={url} token={siteOptions.token} />
-      </SWRConfig>
-    );
-  else
+  if (siteOptions === undefined)
     return (
       <div className="flex flex-col gap-2 p-2 text-small">
         <p>
@@ -357,6 +260,22 @@ const App: React.FC = () => {
         </Button>
       </div>
     );
+
+  const { path, feature } = parsePathname(url.pathname);
+  if (path === undefined)
+    return (
+      <div className="p-2 text-small">
+        <p>
+          <strong className="text-danger">
+            このページはGitLab上のGroupでもProjectでもありません。
+          </strong>
+        </p>
+      </div>
+    );
+
+  return (
+    <Main url={url} token={siteOptions.token} path={path} feature={feature} />
+  );
 };
 
 export default App;
