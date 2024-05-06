@@ -244,20 +244,32 @@ const App: React.FC = () => {
       <div className="flex flex-col gap-2 p-2 text-small">
         <p>
           <strong>
-            このサイト ({url.origin}) でGitLab Quick Navigatorを使用しますか？
+            このサイト ({url.origin}) でGitLab Quick Navigatorを有効にしますか？
           </strong>
         </p>
         <p>
           有効にすると、このサイトでポップアップを開くたびに /api/v4
-          以下のエンドポイントへリクエストが発生します。GitLab以外のサイトでは有効化しないでください。
+          以下のエンドポイントへリクエストが発生します。GitLab以外のサイトでは使用しないでください。
         </p>
-        <Button
-          size="sm"
-          color="primary"
-          onPress={() => void chrome.storage.local.set({ [url.origin]: {} })}
-        >
-          有効にする
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            className="grow"
+            onPress={() => {
+              close();
+            }}
+          >
+            キャンセル
+          </Button>
+          <Button
+            size="sm"
+            color="primary"
+            className="grow"
+            onPress={() => void chrome.storage.local.set({ [url.origin]: {} })}
+          >
+            有効にする
+          </Button>
+        </div>
       </div>
     );
 
