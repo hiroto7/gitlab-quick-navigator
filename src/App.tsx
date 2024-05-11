@@ -12,14 +12,13 @@ import React, { useCallback } from "react";
 import "./App.css";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
 import {
-  Feature,
   GROUP_FEATURES,
   GROUP_FEATURE_NAMES,
   Group,
   PROJECT_FEATURES,
   PROJECT_FEATURE_NAMES,
   Project,
-  getFeature,
+  getFeatureName,
   isProjectFeatureAvailable,
 } from "./lib";
 
@@ -66,23 +65,27 @@ const Main: React.FC<{
       name,
       avatar,
       base,
-      feature,
+      featurePath,
+      featureName,
     }: {
       key: string;
       name: string;
       avatar: string | null;
       base: string;
-      feature: Feature | undefined;
+      featurePath: string | undefined;
+      featureName: string | undefined;
     }) => {
       const href =
-        feature !== undefined ? `${base}/-/${feature.path}${url.search}` : base;
+        featurePath !== undefined
+          ? `${base}/-/${featurePath}${url.search}`
+          : base;
 
       return (
         <ListboxItem
           key={key}
           href={href}
           onPress={() => void chrome.tabs.update({ url: href })}
-          description={feature?.name}
+          description={featureName}
           startContent={
             <Avatar
               isBordered
@@ -177,9 +180,10 @@ const Main: React.FC<{
               base: group.web_url,
               name: group.name,
               avatar: group.avatar_url,
-              feature:
+              featurePath: groupFeature,
+              featureName:
                 groupFeature !== undefined
-                  ? getFeature(groupFeature, GROUP_FEATURE_NAMES)
+                  ? getFeatureName(groupFeature, GROUP_FEATURE_NAMES)
                   : undefined,
             })
           ) : (
@@ -213,9 +217,14 @@ const Main: React.FC<{
               base: project.web_url,
               name: project.name,
               avatar: project.avatar_url,
-              feature:
+              featurePath:
+                projectFeature !== undefined &&
+                ["tree", "network", "graphs"].includes(projectFeature)
+                  ? `${projectFeature}/${project.default_branch}`
+                  : projectFeature,
+              featureName:
                 projectFeature !== undefined
-                  ? getFeature(projectFeature, PROJECT_FEATURE_NAMES)
+                  ? getFeatureName(projectFeature, PROJECT_FEATURE_NAMES)
                   : undefined,
             });
           }) ?? (

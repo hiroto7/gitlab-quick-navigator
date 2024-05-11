@@ -9,6 +9,7 @@ type AccessLevel = "disabled" | "private" | "enabled";
 
 export interface Project {
   avatar_url: string | null;
+  default_branch?: string;
   name: string;
   path_with_namespace: string;
   web_url: string;
@@ -41,11 +42,6 @@ export interface Project {
 
   /** @deprecated */
   jobs_enabled: boolean;
-}
-
-export interface Feature {
-  path: string;
-  name: string;
 }
 
 export const GROUP_FEATURES = [
@@ -120,9 +116,11 @@ export const PROJECT_FEATURES = [
 
   // Code
   "merge_requests",
+  "tree",
   "branches",
   "commits",
   "tags",
+  "network",
   "compare",
   "snippets",
 
@@ -160,6 +158,7 @@ export const PROJECT_FEATURES = [
 
   // Analyze
   "value_stream_analytics",
+  "graphs",
   "pipelines/charts",
   "analytics/code_reviews",
   "analytics/issues_analytics",
@@ -213,7 +212,9 @@ export const PROJECT_FEATURE_NAMES: Partial<
   cadences: "Iteration cadences",
   wikis: "Wiki",
   "requirements_management/requirements": "Requirements",
+  tree: "Repository",
   branches: "Repository / Branches",
+  network: "Graph",
   compare: "Compare revisions",
   "ci/editor": "Pipeline Editor",
   pipeline_schedules: "Schedules",
@@ -230,6 +231,7 @@ export const PROJECT_FEATURE_NAMES: Partial<
   error_tracking: "Errors",
   alert_management: "Alerts",
   "issues/service_desk": "Service Desk",
+  graphs: "Contributor analytics",
   "pipelines/charts": "CI/CD Analytics",
   "ml/experiments": "Model experiments",
   "settings/integrations": "Integration Settings",
@@ -282,9 +284,11 @@ export const isProjectFeatureAvailable: Partial<
 
   releases: (project) => project.releases_access_level !== "disabled",
 
+  tree: (project) => project.repository_access_level !== "disabled",
   branches: (project) => project.repository_access_level !== "disabled",
   commits: (project) => project.repository_access_level !== "disabled",
   tags: (project) => project.repository_access_level !== "disabled",
+  network: (project) => project.repository_access_level !== "disabled",
   compare: (project) => project.repository_access_level !== "disabled",
   "ci/editor": (project) => project.repository_access_level !== "disabled",
 
@@ -303,6 +307,10 @@ export const isProjectFeatureAvailable: Partial<
     project.feature_flags_access_level !== "disabled" &&
     project.repository_access_level !== "disabled",
 
+  graphs: (project) =>
+    project.analytics_access_level !== "disabled" &&
+    project.repository_access_level !== "disabled",
+
   "pipelines/charts": (project) =>
     project.analytics_access_level !== "disabled" &&
     project.repository_access_level !== "disabled",
@@ -314,15 +322,7 @@ const capitalize = <T extends string>(text: T) =>
 const getDefaultFeatureName = (path: string) =>
   path.replace("_", " ").split("/").map(capitalize).join(" / ");
 
-const getFeatureName = <P extends string>(
+export const getFeatureName = <P extends string>(
   path: P,
   featureNames: Partial<Record<P, string>>,
 ) => featureNames[path] ?? getDefaultFeatureName(path);
-
-export const getFeature = <P extends string>(
-  path: P,
-  featureNames: Partial<Record<P, string>>,
-): Feature => ({
-  path,
-  name: getFeatureName(path, featureNames),
-});
