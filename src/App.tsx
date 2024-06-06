@@ -11,6 +11,7 @@ import {
 import React, { useCallback } from "react";
 import "./App.css";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
+import { StarIcon, StarredIcon } from "./icons";
 import {
   GROUP_FEATURES,
   GROUP_FEATURE_NAMES,
@@ -42,7 +43,20 @@ const Main: React.FC<{
   token: string | undefined;
   path: string;
   feature: string | undefined;
-}> = ({ url, token, path, feature }) => {
+  starredGroups: Group[];
+  starredProjects: Project[];
+  onSetToken: (token: string) => void;
+  onDeleteToken: () => void;
+}> = ({
+  url,
+  token,
+  path,
+  feature,
+  starredGroups,
+  starredProjects,
+  onSetToken,
+  onDeleteToken,
+}) => {
   const {
     data: group,
     error: groupError,
@@ -67,6 +81,8 @@ const Main: React.FC<{
       base,
       featurePath,
       featureName,
+      starred,
+      onStar,
     }: {
       key: string;
       name: string;
@@ -74,6 +90,8 @@ const Main: React.FC<{
       base: string;
       featurePath: string | undefined;
       featureName: string | undefined;
+      starred: boolean;
+      onStar: (starred: boolean) => void;
     }) => {
       const href =
         featurePath !== undefined
@@ -95,6 +113,20 @@ const Main: React.FC<{
               {...(avatar !== null ? { src: avatar } : {})}
               className="flex-shrink-0"
             />
+          }
+          data-starred={starred}
+          endContent={
+            <Button
+              isIconOnly
+              variant="light"
+              size="sm"
+              className="hidden group-data-[hover=true]:inline-flex group-data-[selected=true]:inline-flex group-data-[starred=true]:inline-flex"
+              onPress={() => {
+                onStar(!starred);
+              }}
+            >
+              {starred ? <StarredIcon /> : <StarIcon />}
+            </Button>
           }
         >
           {name}
@@ -124,9 +156,8 @@ const Main: React.FC<{
             );
             if (token === null) return;
 
-            void chrome.storage.local.set({
-              [url.origin]: token !== "" ? { token } : {},
-            });
+            if (token !== "") onSetToken(token);
+            else onDeleteToken();
           }}
         >
           アクセストークンを設定
@@ -174,8 +205,26 @@ const Main: React.FC<{
         aria-label="Group and Projects"
       >
         <ListboxSection title="Group" showDivider>
-          {group !== undefined ? (
-            getListboxItem({
+          {[
+            ...starredGroups.map((group) => ({ group, starred: true })),
+            ...(group !== undefined
+              ? starredGroups.find(
+                  (starredGroup) => starredGroup.id === group.id,
+                )
+                ? []
+                : [{ group, starred: false }]
+              : [undefined]),
+          ].map((item) => {
+            if (item === undefined)
+              return (
+                <ListboxItem key="skeleton" textValue="Loading...">
+                  <Skeleton className="h-8 w-full" />
+                </ListboxItem>
+              );
+
+            const { group, starred } = item;
+
+            return getListboxItem({
               key: group.full_path,
               base: group.web_url,
               name: group.name,
@@ -185,15 +234,43 @@ const Main: React.FC<{
                 groupFeature !== undefined
                   ? getFeatureName(groupFeature, GROUP_FEATURE_NAMES)
                   : undefined,
-            })
-          ) : (
-            <ListboxItem key="skeleton" textValue="Loading...">
-              <Skeleton className="h-8 w-full" />
-            </ListboxItem>
-          )}
+              starred: starred,
+              onStar: (starred) => {
+                if (starred)
+                  void chrome.storage.local.set({
+                    groups: [...starredGroups, group],
+                  });
+                else
+                  void chrome.storage.local.set({
+                    groups: starredGroups.filter(
+                      (starredGroup) => starredGroup.id !== group.id,
+                    ),
+                  });
+              },
+            });
+          })}
         </ListboxSection>
         <ListboxSection title="Projects">
-          {projects?.map((project) => {
+          {[
+            ...starredProjects.map((project) => ({ project, starred: true })),
+            ...(projects
+              ?.filter(
+                (project) =>
+                  starredProjects.find(
+                    (starredProject) => starredProject.id === project.id,
+                  ) === undefined,
+              )
+              .map((project) => ({ project, starred: false })) ?? [undefined]),
+          ].map((item) => {
+            if (item === undefined)
+              return (
+                <ListboxItem key="skeleton" textValue="Loading...">
+                  <Skeleton className="h-8 w-full" />
+                </ListboxItem>
+              );
+
+            const { project, starred } = item;
+
             const projectFeature:
               | (typeof PROJECT_FEATURES)[number]
               | undefined =
@@ -226,12 +303,21 @@ const Main: React.FC<{
                 projectFeature !== undefined
                   ? getFeatureName(projectFeature, PROJECT_FEATURE_NAMES)
                   : undefined,
+              starred: starred,
+              onStar: (starred) => {
+                if (starred)
+                  void chrome.storage.local.set({
+                    projects: [...starredProjects, project],
+                  });
+                else
+                  void chrome.storage.local.set({
+                    projects: starredProjects.filter(
+                      (starredProject) => starredProject.id !== project.id,
+                    ),
+                  });
+              },
             });
-          }) ?? (
-            <ListboxItem key="skeleton" textValue="Loading...">
-              <Skeleton className="h-8 w-full" />
-            </ListboxItem>
-          )}
+          })}
         </ListboxSection>
       </Listbox>
     </>
@@ -240,14 +326,17 @@ const Main: React.FC<{
 
 const App: React.FC = () => {
   const url = useCurrentUrl();
-  const options = useChromeStorage<Record<string, { token?: string }>>(
-    "local",
-    true,
-  );
+  const storedData = useChromeStorage<{
+    origins?: Record<string, { token?: string }>;
+    groups?: Group[];
+    projects?: Project[];
+  }>("local", true);
 
-  if (url === undefined || options === undefined) return;
+  if (url === undefined || storedData === undefined) return;
 
-  const siteOptions = options[url.origin];
+  const { origins, groups, projects } = storedData;
+
+  const siteOptions = origins?.[url.origin];
   if (siteOptions === undefined)
     return (
       <div className="flex flex-col gap-2 p-2 text-small">
@@ -274,7 +363,11 @@ const App: React.FC = () => {
             size="sm"
             color="primary"
             className="grow"
-            onPress={() => void chrome.storage.local.set({ [url.origin]: {} })}
+            onPress={() =>
+              void chrome.storage.local.set({
+                origins: { ...origins, [url.origin]: {} },
+              })
+            }
           >
             有効にする
           </Button>
@@ -298,7 +391,24 @@ const App: React.FC = () => {
     );
 
   return (
-    <Main url={url} token={siteOptions.token} path={path} feature={feature} />
+    <Main
+      url={url}
+      token={siteOptions.token}
+      path={path}
+      feature={feature}
+      starredGroups={groups ?? []}
+      starredProjects={projects ?? []}
+      onSetToken={(token) =>
+        void chrome.storage.local.set({
+          origins: { ...origins, [url.origin]: { token } },
+        })
+      }
+      onDeleteToken={() =>
+        void chrome.storage.local.set({
+          origins: { ...origins, [url.origin]: {} },
+        })
+      }
+    />
   );
 };
 
