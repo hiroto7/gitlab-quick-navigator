@@ -2,13 +2,13 @@ import { Button, Listbox, ListboxItem } from "@nextui-org/react";
 import { useChromeStorage } from "../hooks";
 
 const App: React.FC = () => {
-  const options = useChromeStorage<Record<string, { token?: string }>>(
-    "local",
-    true,
-  );
+  const storedData = useChromeStorage<{
+    origins?: Record<string, { token?: string }>;
+  }>("local", true);
 
-  if (options === undefined) return undefined;
+  if (storedData === undefined) return undefined;
 
+  const options = storedData.origins ?? {};
   return (
     <Listbox
       shouldHighlightOnFocus={false}
@@ -36,7 +36,13 @@ const App: React.FC = () => {
                       `${origin} でGitLab Quick Navigatorを無効化すると、設定したアクセストークンも削除されます。`,
                     )
                   )
-                    void chrome.storage.local.remove(origin);
+                    void chrome.storage.local.set({
+                      origins: Object.fromEntries(
+                        Object.entries(options).filter(
+                          ([key]) => key !== origin,
+                        ),
+                      ),
+                    });
                 }}
                 className="flex-shrink-0"
               >
