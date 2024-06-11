@@ -1,6 +1,7 @@
 import {
   Avatar,
   Button,
+  ButtonGroup,
   Link,
   Listbox,
   ListboxItem,
@@ -11,7 +12,7 @@ import {
 import React, { useCallback } from "react";
 import "./App.css";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
-import { StarIcon, StarredIcon } from "./icons";
+import { DownIcon, StarIcon, StarredIcon, UpIcon } from "./icons";
 import {
   GROUP_FEATURES,
   GROUP_FEATURE_NAMES,
@@ -116,17 +117,28 @@ const Main: React.FC<{
           }
           data-starred={starred}
           endContent={
-            <Button
-              isIconOnly
-              variant="light"
-              size="sm"
-              className="hidden group-data-[hover=true]:inline-flex group-data-[selected=true]:inline-flex group-data-[starred=true]:inline-flex"
-              onPress={() => {
-                onStar(!starred);
-              }}
-            >
-              {starred ? <StarredIcon /> : <StarIcon />}
-            </Button>
+            <ButtonGroup isIconOnly variant="light" size="sm">
+              {starred ? (
+                <>
+                  <Button className="hidden group-data-[hover=true]:inline-flex">
+                    <DownIcon />
+                  </Button>
+                  <Button className="hidden group-data-[hover=true]:inline-flex">
+                    <UpIcon />
+                  </Button>
+                </>
+              ) : (
+                <></>
+              )}
+              <Button
+                className="hidden group-data-[hover=true]:inline-flex group-data-[starred=true]:inline-flex"
+                onPress={() => {
+                  onStar(!starred);
+                }}
+              >
+                {starred ? <StarredIcon /> : <StarIcon />}
+              </Button>
+            </ButtonGroup>
           }
         >
           {name}
