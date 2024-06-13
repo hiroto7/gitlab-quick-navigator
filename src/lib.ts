@@ -330,6 +330,8 @@ export const getFeatureName = <P extends string>(
 ) => featureNames[path] ?? getDefaultFeatureName(path);
 
 export const move = <T>(array: readonly T[], from: number, to: number) => {
+  if (from === to) return array;
+
   const result = [...array];
   result.splice(from, 1);
   result.splice(to, 0, array[from]!);

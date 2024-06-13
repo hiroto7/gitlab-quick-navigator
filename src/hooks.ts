@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
+import { move } from "./lib";
 
 export const useCurrentUrl = () => {
   const [href, setHref] = useState<string>();
@@ -121,4 +122,36 @@ export const useClosestGroup = <T>(
           : new AggregateError([error, parentError]),
       isValidating,
     };
+};
+
+export const useDrag = <T>(currentList: T[]) => {
+  const [draggedItem, setDraggedItem] = useState<T>();
+  const [to, setTo] = useState<number>();
+
+  const onDragStart = useCallback((item: T) => {
+    setDraggedItem(item);
+  }, []);
+
+  const onDragEnd = useCallback(() => {
+    setDraggedItem(undefined);
+    setTo(undefined);
+  }, []);
+
+  const onDragEnter: (index: number) => void = setTo;
+
+  const from =
+    draggedItem !== undefined ? currentList.indexOf(draggedItem) : undefined;
+
+  const list =
+    from !== undefined && from > -1 && to !== undefined
+      ? move(currentList, from, to)
+      : currentList;
+
+  return {
+    list,
+    dragging: draggedItem !== undefined,
+    onDragStart,
+    onDragEnd,
+    onDragEnter,
+  };
 };

@@ -6,7 +6,7 @@ import {
   ListboxSection,
   Skeleton,
 } from "@nextui-org/react";
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { StarIcon, StarredIcon } from "./icons";
 import {
   GROUP_FEATURES,
@@ -17,8 +17,8 @@ import {
   Project,
   getFeatureName,
   isProjectFeatureAvailable,
-  move,
 } from "./lib";
+import { useDrag } from "./hooks";
 
 const GroupProjectList: React.FC<{
   path: string;
@@ -32,15 +32,25 @@ const GroupProjectList: React.FC<{
   path,
   feature,
   search,
-  starredGroups,
-  starredProjects,
+  starredGroups: currentStarredGroups,
+  starredProjects: currentStarredProjects,
   currentGroup: group,
   currentGroupProjects: projects,
 }) => {
-  const [draggedGroup, setDraggedGroup] = useState<Group>();
-  const [draggedProject, setDraggedProject] = useState<Project>();
-  const [nextStarredGroups, setNextStarredGroups] = useState<Group[]>();
-  const [nextStarredProjects, setNextStarredProjects] = useState<Project[]>();
+  const {
+    list: starredGroups,
+    dragging: draggingGroup,
+    onDragStart: onGroupDragStart,
+    onDragEnter: onGroupDragEnter,
+    onDragEnd: onGroupDragEnd,
+  } = useDrag(currentStarredGroups);
+  const {
+    list: starredProjects,
+    dragging: draggingProject,
+    onDragStart: onProjectDragStart,
+    onDragEnter: onProjectDragEnter,
+    onDragEnd: onProjectDragEnd,
+  } = useDrag(currentStarredProjects);
 
   const getListboxItem = useCallback(
     ({
@@ -145,17 +155,17 @@ const GroupProjectList: React.FC<{
       selectedKeys={[path]}
       disabledKeys={[
         "skeleton",
-        ...(nextStarredGroups !== undefined
+        ...(draggingGroup
           ? allKeys.filter(
               (key) =>
-                nextStarredGroups.find((group) => group.full_path === key) ===
+                starredGroups.find((group) => group.full_path === key) ===
                 undefined,
             )
           : []),
-        ...(nextStarredProjects !== undefined
+        ...(draggingProject
           ? allKeys.filter(
               (key) =>
-                nextStarredProjects.find(
+                starredProjects.find(
                   (project) => project.path_with_namespace === key,
                 ) === undefined,
             )
@@ -165,14 +175,11 @@ const GroupProjectList: React.FC<{
     >
       <ListboxSection title="Group" showDivider>
         {[
-          ...(nextStarredGroups ?? starredGroups).map((group, index) => ({
+          ...starredGroups.map((group, index) => ({
             group,
             starred: true,
             onDragEnter: () => {
-              const draggedIndex = nextStarredGroups!.indexOf(draggedGroup!);
-              setNextStarredGroups(
-                move(nextStarredGroups!, draggedIndex, index),
-              );
+              onGroupDragEnter(index);
             },
           })),
           ...(group !== undefined
@@ -214,31 +221,22 @@ const GroupProjectList: React.FC<{
                 });
             },
             onDragStart: () => {
-              setDraggedGroup(group);
-              setNextStarredGroups([...starredGroups]);
+              onGroupDragStart(group);
             },
-            onDragEnd: () => {
-              setDraggedGroup(undefined);
-              setNextStarredGroups(undefined);
-            },
+            onDragEnd: onGroupDragEnd,
             onDragEnter,
             onDrop: () =>
-              void chrome.storage.local.set({ groups: nextStarredGroups }),
+              void chrome.storage.local.set({ groups: starredGroups }),
           });
         })}
       </ListboxSection>
       <ListboxSection title="Projects">
         {[
-          ...(nextStarredProjects ?? starredProjects).map((project, index) => ({
+          ...starredProjects.map((project, index) => ({
             project,
             starred: true,
             onDragEnter: () => {
-              const draggedIndex = nextStarredProjects!.indexOf(
-                draggedProject!,
-              );
-              setNextStarredProjects(
-                move(nextStarredProjects!, draggedIndex, index),
-              );
+              onProjectDragEnter(index);
             },
           })),
           ...(projects
@@ -307,16 +305,12 @@ const GroupProjectList: React.FC<{
                 });
             },
             onDragStart: () => {
-              setDraggedProject(project);
-              setNextStarredProjects([...starredProjects]);
+              onProjectDragStart(project);
             },
-            onDragEnd: () => {
-              setDraggedProject(undefined);
-              setNextStarredProjects(undefined);
-            },
+            onDragEnd: onProjectDragEnd,
             onDragEnter,
             onDrop: () =>
-              void chrome.storage.local.set({ projects: nextStarredProjects }),
+              void chrome.storage.local.set({ projects: starredProjects }),
           });
         })}
       </ListboxSection>
