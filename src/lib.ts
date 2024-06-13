@@ -328,3 +328,10 @@ export const getFeatureName = <P extends string>(
   path: P,
   featureNames: Partial<Record<P, string>>,
 ) => featureNames[path] ?? getDefaultFeatureName(path);
+
+export const move = <T>(array: readonly T[], from: number, to: number) => {
+  const result = [...array];
+  result.splice(from, 1);
+  result.splice(to, 0, array[from]!);
+  return result;
+};
