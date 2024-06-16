@@ -1,6 +1,7 @@
 export interface Group {
   avatar_url: string | null;
   full_path: string;
+  id: number;
   name: string;
   web_url: string;
 }
@@ -10,6 +11,7 @@ type AccessLevel = "disabled" | "private" | "enabled";
 export interface Project {
   avatar_url: string | null;
   default_branch?: string;
+  id: number;
   name: string;
   path_with_namespace: string;
   web_url: string;
@@ -326,3 +328,12 @@ export const getFeatureName = <P extends string>(
   path: P,
   featureNames: Partial<Record<P, string>>,
 ) => featureNames[path] ?? getDefaultFeatureName(path);
+
+export const move = <T>(array: readonly T[], from: number, to: number) => {
+  if (from === to) return array;
+
+  const result = [...array];
+  result.splice(from, 1);
+  result.splice(to, 0, array[from]!);
+  return result;
+};

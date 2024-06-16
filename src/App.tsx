@@ -1,26 +1,9 @@
-import {
-  Avatar,
-  Button,
-  Link,
-  Listbox,
-  ListboxItem,
-  ListboxSection,
-  Progress,
-  Skeleton,
-} from "@nextui-org/react";
-import React, { useCallback } from "react";
+import { Button, Link, Progress } from "@nextui-org/react";
+import React from "react";
 import "./App.css";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
-import {
-  GROUP_FEATURES,
-  GROUP_FEATURE_NAMES,
-  Group,
-  PROJECT_FEATURES,
-  PROJECT_FEATURE_NAMES,
-  Project,
-  getFeatureName,
-  isProjectFeatureAvailable,
-} from "./lib";
+import { Group, Project } from "./lib";
+import GroupProjectList from "./GroupProjectList";
 
 const re =
   /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?/;
@@ -42,7 +25,20 @@ const Main: React.FC<{
   token: string | undefined;
   path: string;
   feature: string | undefined;
-}> = ({ url, token, path, feature }) => {
+  starredGroups: Group[];
+  starredProjects: Project[];
+  onSetToken: (token: string) => void;
+  onDeleteToken: () => void;
+}> = ({
+  url,
+  token,
+  path,
+  feature,
+  starredGroups,
+  starredProjects,
+  onSetToken,
+  onDeleteToken,
+}) => {
   const {
     data: group,
     error: groupError,
@@ -57,51 +53,6 @@ const Main: React.FC<{
     url.origin,
     path,
     token,
-  );
-
-  const getListboxItem = useCallback(
-    ({
-      key,
-      name,
-      avatar,
-      base,
-      featurePath,
-      featureName,
-    }: {
-      key: string;
-      name: string;
-      avatar: string | null;
-      base: string;
-      featurePath: string | undefined;
-      featureName: string | undefined;
-    }) => {
-      const href =
-        featurePath !== undefined
-          ? `${base}/-/${featurePath}${url.search}`
-          : base;
-
-      return (
-        <ListboxItem
-          key={key}
-          href={href}
-          onPress={() => void chrome.tabs.update({ url: href })}
-          description={featureName}
-          startContent={
-            <Avatar
-              isBordered
-              radius="sm"
-              size="sm"
-              name={name}
-              {...(avatar !== null ? { src: avatar } : {})}
-              className="flex-shrink-0"
-            />
-          }
-        >
-          {name}
-        </ListboxItem>
-      );
-    },
-    [url.search],
   );
 
   if (groupError || projectsError)
@@ -124,9 +75,8 @@ const Main: React.FC<{
             );
             if (token === null) return;
 
-            void chrome.storage.local.set({
-              [url.origin]: token !== "" ? { token } : {},
-            });
+            if (token !== "") onSetToken(token);
+            else onDeleteToken();
           }}
         >
           アクセストークンを設定
@@ -144,17 +94,6 @@ const Main: React.FC<{
       </div>
     );
 
-  const groupFeature: (typeof GROUP_FEATURES)[number] | undefined =
-    feature !== undefined
-      ? feature.startsWith("project_members")
-        ? "group_members"
-        : feature.startsWith("analytics/issues_analytics")
-          ? "issues_analytics"
-          : GROUP_FEATURES.findLast((groupFeature) =>
-              feature.startsWith(groupFeature),
-            )
-      : undefined;
-
   return (
     <>
       <Progress
@@ -167,87 +106,32 @@ const Main: React.FC<{
         }
         aria-label="Loading..."
       />
-      <Listbox
-        selectionMode="single"
-        selectedKeys={[path]}
-        disabledKeys={["skeleton"]}
-        aria-label="Group and Projects"
-      >
-        <ListboxSection title="Group" showDivider>
-          {group !== undefined ? (
-            getListboxItem({
-              key: group.full_path,
-              base: group.web_url,
-              name: group.name,
-              avatar: group.avatar_url,
-              featurePath: groupFeature,
-              featureName:
-                groupFeature !== undefined
-                  ? getFeatureName(groupFeature, GROUP_FEATURE_NAMES)
-                  : undefined,
-            })
-          ) : (
-            <ListboxItem key="skeleton" textValue="Loading...">
-              <Skeleton className="h-8 w-full" />
-            </ListboxItem>
-          )}
-        </ListboxSection>
-        <ListboxSection title="Projects">
-          {projects?.map((project) => {
-            const projectFeature:
-              | (typeof PROJECT_FEATURES)[number]
-              | undefined =
-              feature !== undefined
-                ? feature.startsWith("group_members")
-                  ? "project_members"
-                  : feature.startsWith("issues_analytics")
-                    ? "analytics/issues_analytics"
-                    : PROJECT_FEATURES.findLast(
-                        (projectFeature) =>
-                          (feature.startsWith(projectFeature) &&
-                            isProjectFeatureAvailable[projectFeature]?.(
-                              project,
-                            )) ??
-                          true,
-                      )
-                : undefined;
-
-            return getListboxItem({
-              key: project.path_with_namespace,
-              base: project.web_url,
-              name: project.name,
-              avatar: project.avatar_url,
-              featurePath:
-                projectFeature !== undefined &&
-                ["tree", "network", "graphs"].includes(projectFeature)
-                  ? `${projectFeature}/${project.default_branch}`
-                  : projectFeature,
-              featureName:
-                projectFeature !== undefined
-                  ? getFeatureName(projectFeature, PROJECT_FEATURE_NAMES)
-                  : undefined,
-            });
-          }) ?? (
-            <ListboxItem key="skeleton" textValue="Loading...">
-              <Skeleton className="h-8 w-full" />
-            </ListboxItem>
-          )}
-        </ListboxSection>
-      </Listbox>
+      <GroupProjectList
+        starredGroups={starredGroups}
+        starredProjects={starredProjects}
+        currentGroup={group}
+        currentGroupProjects={projects}
+        path={path}
+        feature={feature}
+        search={url.search}
+      />
     </>
   );
 };
 
 const App: React.FC = () => {
   const url = useCurrentUrl();
-  const options = useChromeStorage<Record<string, { token?: string }>>(
-    "local",
-    true,
-  );
+  const storedData = useChromeStorage<{
+    origins?: Record<string, { token?: string }>;
+    groups?: Group[];
+    projects?: Project[];
+  }>("local", true);
 
-  if (url === undefined || options === undefined) return;
+  if (url === undefined || storedData === undefined) return;
 
-  const siteOptions = options[url.origin];
+  const { origins, groups, projects } = storedData;
+
+  const siteOptions = origins?.[url.origin];
   if (siteOptions === undefined)
     return (
       <div className="flex flex-col gap-2 p-2 text-small">
@@ -274,7 +158,11 @@ const App: React.FC = () => {
             size="sm"
             color="primary"
             className="grow"
-            onPress={() => void chrome.storage.local.set({ [url.origin]: {} })}
+            onPress={() =>
+              void chrome.storage.local.set({
+                origins: { ...origins, [url.origin]: {} },
+              })
+            }
           >
             有効にする
           </Button>
@@ -298,7 +186,24 @@ const App: React.FC = () => {
     );
 
   return (
-    <Main url={url} token={siteOptions.token} path={path} feature={feature} />
+    <Main
+      url={url}
+      token={siteOptions.token}
+      path={path}
+      feature={feature}
+      starredGroups={groups ?? []}
+      starredProjects={projects ?? []}
+      onSetToken={(token) =>
+        void chrome.storage.local.set({
+          origins: { ...origins, [url.origin]: { token } },
+        })
+      }
+      onDeleteToken={() =>
+        void chrome.storage.local.set({
+          origins: { ...origins, [url.origin]: {} },
+        })
+      }
+    />
   );
 };
 
