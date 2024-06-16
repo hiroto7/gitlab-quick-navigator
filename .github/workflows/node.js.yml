@@ -18,6 +18,7 @@ jobs:
         run: pnpm install
       - run: pnpm lint
       - run: pnpm exec prettier . --check
+      - run: pnpm test
       - run: pnpm build
       - uses: actions/upload-artifact@v4
         with:
