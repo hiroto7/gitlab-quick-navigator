@@ -149,13 +149,50 @@ const GroupProjectList: React.FC<{
     ),
   ];
 
-  if (
-    starredGroups.length === 0 &&
-    starredProjects.length === 0 &&
-    group === undefined &&
-    (projects === undefined || projects.length === 0)
-  )
-    return undefined;
+  const groupItems = [
+    ...starredGroups.map((group, index) => ({
+      group,
+      starred: true,
+      onDragEnter: () => {
+        onGroupDragEnter(index);
+      },
+    })),
+    ...(typeof group === "object"
+      ? starredGroups.find((starredGroup) => starredGroup.id === group.id)
+        ? []
+        : [{ group, starred: false, onDragEnter: undefined }]
+      : group === "loading"
+        ? [group]
+        : []),
+  ];
+
+  const projectItems = [
+    ...starredProjects.map((project, index) => ({
+      project,
+      starred: true,
+      onDragEnter: () => {
+        onProjectDragEnter(index);
+      },
+    })),
+    ...(Array.isArray(projects)
+      ? projects
+          .filter(
+            (project) =>
+              starredProjects.find(
+                (starredProject) => starredProject.id === project.id,
+              ) === undefined,
+          )
+          .map((project) => ({
+            project,
+            starred: false,
+            onDragEnter: undefined,
+          }))
+      : projects === "loading"
+        ? [projects]
+        : []),
+  ];
+
+  if (groupItems.length === 0 && projectItems.length === 0) return undefined;
 
   return (
     <Listbox
@@ -182,22 +219,7 @@ const GroupProjectList: React.FC<{
       aria-label="Group and Projects"
     >
       <ListboxSection title="Group" showDivider>
-        {[
-          ...starredGroups.map((group, index) => ({
-            group,
-            starred: true,
-            onDragEnter: () => {
-              onGroupDragEnter(index);
-            },
-          })),
-          ...(typeof group === "object"
-            ? starredGroups.find((starredGroup) => starredGroup.id === group.id)
-              ? []
-              : [{ group, starred: false, onDragEnter: undefined }]
-            : group === "loading"
-              ? [group]
-              : []),
-        ].map((item) => {
+        {groupItems.map((item) => {
           if (item === "loading")
             return (
               <ListboxItem key="skeleton" textValue="Loading...">
@@ -241,31 +263,7 @@ const GroupProjectList: React.FC<{
         })}
       </ListboxSection>
       <ListboxSection title="Projects">
-        {[
-          ...starredProjects.map((project, index) => ({
-            project,
-            starred: true,
-            onDragEnter: () => {
-              onProjectDragEnter(index);
-            },
-          })),
-          ...(Array.isArray(projects)
-            ? projects
-                .filter(
-                  (project) =>
-                    starredProjects.find(
-                      (starredProject) => starredProject.id === project.id,
-                    ) === undefined,
-                )
-                .map((project) => ({
-                  project,
-                  starred: false,
-                  onDragEnter: undefined,
-                }))
-            : projects === "loading"
-              ? [projects]
-              : []),
-        ].map((item) => {
+        {projectItems.map((item) => {
           if (item === "loading")
             return (
               <ListboxItem key="skeleton" textValue="Loading...">
