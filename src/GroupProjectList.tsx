@@ -21,13 +21,13 @@ import {
 import { useDrag } from "./hooks";
 
 const GroupProjectList: React.FC<{
-  path: string;
+  path: string | undefined;
   feature: string | undefined;
   search: string;
   starredGroups: Group[];
   starredProjects: Project[];
-  currentGroup: Group | undefined;
-  currentGroupProjects: Project[] | undefined;
+  currentGroup: Group | "loading" | undefined;
+  currentGroupProjects: Project[] | "loading" | undefined;
 }> = ({
   path,
   feature,
@@ -39,14 +39,14 @@ const GroupProjectList: React.FC<{
 }) => {
   const {
     list: starredGroups,
-    dragging: draggingGroup,
+    dragging: isDraggingGroup,
     onDragStart: onGroupDragStart,
     onDragEnter: onGroupDragEnter,
     onDragEnd: onGroupDragEnd,
   } = useDrag(currentStarredGroups);
   const {
     list: starredProjects,
-    dragging: draggingProject,
+    dragging: isDraggingProject,
     onDragStart: onProjectDragStart,
     onDragEnter: onProjectDragEnter,
     onDragEnd: onProjectDragEnd,
@@ -141,28 +141,36 @@ const GroupProjectList: React.FC<{
       : undefined;
 
   const allKeys = [
-    ...[...starredGroups, ...(group !== undefined ? [group] : [])].map(
+    ...[...starredGroups, ...(typeof group === "object" ? [group] : [])].map(
       (group) => group.full_path,
     ),
-    ...[...starredProjects, ...(projects ?? [])].map(
+    ...[...starredProjects, ...(Array.isArray(projects) ? projects : [])].map(
       (project) => project.path_with_namespace,
     ),
   ];
 
+  if (
+    starredGroups.length === 0 &&
+    starredProjects.length === 0 &&
+    group === undefined &&
+    (projects === undefined || projects.length === 0)
+  )
+    return undefined;
+
   return (
     <Listbox
       selectionMode="single"
-      selectedKeys={[path]}
+      selectedKeys={path !== undefined ? [path] : []}
       disabledKeys={[
         "skeleton",
-        ...(draggingGroup
+        ...(isDraggingGroup
           ? allKeys.filter(
               (key) =>
                 starredGroups.find((group) => group.full_path === key) ===
                 undefined,
             )
           : []),
-        ...(draggingProject
+        ...(isDraggingProject
           ? allKeys.filter(
               (key) =>
                 starredProjects.find(
@@ -182,13 +190,15 @@ const GroupProjectList: React.FC<{
               onGroupDragEnter(index);
             },
           })),
-          ...(group !== undefined
+          ...(typeof group === "object"
             ? starredGroups.find((starredGroup) => starredGroup.id === group.id)
               ? []
               : [{ group, starred: false, onDragEnter: undefined }]
-            : [undefined]),
+            : group === "loading"
+              ? [group]
+              : []),
         ].map((item) => {
-          if (item === undefined)
+          if (item === "loading")
             return (
               <ListboxItem key="skeleton" textValue="Loading...">
                 <Skeleton className="h-8 w-full" />
@@ -239,20 +249,24 @@ const GroupProjectList: React.FC<{
               onProjectDragEnter(index);
             },
           })),
-          ...(projects
-            ?.filter(
-              (project) =>
-                starredProjects.find(
-                  (starredProject) => starredProject.id === project.id,
-                ) === undefined,
-            )
-            .map((project) => ({
-              project,
-              starred: false,
-              onDragEnter: undefined,
-            })) ?? [undefined]),
+          ...(Array.isArray(projects)
+            ? projects
+                .filter(
+                  (project) =>
+                    starredProjects.find(
+                      (starredProject) => starredProject.id === project.id,
+                    ) === undefined,
+                )
+                .map((project) => ({
+                  project,
+                  starred: false,
+                  onDragEnter: undefined,
+                }))
+            : projects === "loading"
+              ? [projects]
+              : []),
         ].map((item) => {
-          if (item === undefined)
+          if (item === "loading")
             return (
               <ListboxItem key="skeleton" textValue="Loading...">
                 <Skeleton className="h-8 w-full" />

@@ -21,78 +21,41 @@ const groupProjectsEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`;
 
 const Main: React.FC<{
+  options: { token?: string } | undefined;
   url: URL;
-  token: string | undefined;
-  path: string;
-  feature: string | undefined;
   starredGroups: Group[];
   starredProjects: Project[];
+  onEnable: () => void;
   onSetToken: (token: string) => void;
   onDeleteToken: () => void;
 }> = ({
+  options,
   url,
-  token,
-  path,
-  feature,
   starredGroups,
   starredProjects,
+  onEnable,
   onSetToken,
   onDeleteToken,
 }) => {
+  const { path, feature } = parsePathname(url.pathname);
+
   const {
     data: group,
     error: groupError,
     isValidating: isGroupValidating,
-  } = useClosestGroup<Group>(groupDetailEndpoint, url.origin, path, token);
+    isLoading: isGroupLoading,
+  } = useClosestGroup<Group>(groupDetailEndpoint, url.origin, path, options);
   const {
     data: projects,
     error: projectsError,
     isValidating: isProjectsValidating,
+    isLoading: isProjectsLoading,
   } = useClosestGroup<Project[]>(
     groupProjectsEndpoint,
     url.origin,
     path,
-    token,
+    options,
   );
-
-  if (groupError || projectsError)
-    return (
-      <div className="flex flex-col gap-2 p-2 text-small">
-        <p>
-          <strong className="text-danger">
-            GroupやProjectの一覧を取得できません。
-          </strong>
-        </p>
-        <p>
-          このページがGitLab上のGroupでもProjectでもないか、権限がありません。プライベートなGroupやProjectで使うには、アクセストークンを設定してください。
-        </p>
-        <Button
-          size="sm"
-          color="primary"
-          onPress={() => {
-            const token = prompt(
-              `${url.origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。`,
-            );
-            if (token === null) return;
-
-            if (token !== "") onSetToken(token);
-            else onDeleteToken();
-          }}
-        >
-          アクセストークンを設定
-        </Button>
-        <p>
-          <Link
-            size="sm"
-            showAnchorIcon
-            isExternal
-            href={`${url.origin}/-/user_settings/personal_access_tokens?name=GitLab+Quick+Navigator&scopes=read_api`}
-          >
-            アクセストークンを発行
-          </Link>
-        </p>
-      </div>
-    );
 
   return (
     <>
@@ -106,11 +69,74 @@ const Main: React.FC<{
         }
         aria-label="Loading..."
       />
+      {options === undefined ? (
+        <div className="m-2 flex flex-col gap-2 rounded-medium bg-content1 p-2">
+          <p className="text-small font-bold">
+            このサイトでGitLab Quick Navigatorを有効にしますか？
+          </p>
+          <p className="text-tiny">
+            有効にすると、このサイト ({url.origin})
+            でGroupやProjectの一覧を表示します。
+          </p>
+          <p className="text-tiny">
+            ポップアップを開くたびに /api/v4
+            以下のエンドポイントへリクエストが発生するため、GitLab以外のサイトでは有効にしないでください。
+          </p>
+          <Button size="sm" color="primary" className="grow" onPress={onEnable}>
+            有効にする
+          </Button>
+        </div>
+      ) : path === undefined ? (
+        <div className="m-2 flex flex-col gap-2 rounded-medium bg-content1 p-2">
+          <p className="text-small font-bold text-warning">
+            このページのURLからGroupやProjectを特定できません
+          </p>
+          <p className="text-tiny">
+            GroupまたはProjectのページでポップアップを開くと、そのページのGroupやProjectの一覧を表示します。
+          </p>
+        </div>
+      ) : groupError || projectsError ? (
+        <div className="m-2 flex flex-col gap-2 rounded-medium bg-content1 p-2">
+          <p className="text-small font-bold text-warning">
+            このページでGroupやProjectの一覧を取得できません
+          </p>
+          <p className="text-tiny">
+            このページのURLに対応していないか、権限がありません。プライベートなGroupやProjectを表示するには、アクセストークンを設定してください。
+          </p>
+          <Button
+            size="sm"
+            color="primary"
+            onPress={() => {
+              const token = prompt(
+                `${url.origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。`,
+              );
+              if (token === null) return;
+
+              if (token !== "") onSetToken(token);
+              else onDeleteToken();
+            }}
+          >
+            アクセストークンを設定
+          </Button>
+          <p>
+            <Link
+              size="sm"
+              showAnchorIcon
+              isExternal
+              href={`${url.origin}/-/user_settings/personal_access_tokens?name=GitLab+Quick+Navigator&scopes=read_api`}
+            >
+              アクセストークンを発行
+            </Link>
+          </p>
+        </div>
+      ) : (
+        <></>
+      )}
       <GroupProjectList
         starredGroups={starredGroups}
         starredProjects={starredProjects}
-        currentGroup={group}
-        currentGroupProjects={projects}
+        currentGroup={!isGroupLoading ? group : "loading"}
+        currentGroupProjects={!isProjectsLoading ? projects : "loading"}
         path={path}
         feature={feature}
         search={url.search}
@@ -131,68 +157,17 @@ const App: React.FC = () => {
 
   const { origins, groups, projects } = storedData;
 
-  const siteOptions = origins?.[url.origin];
-  if (siteOptions === undefined)
-    return (
-      <div className="flex flex-col gap-2 p-2 text-small">
-        <p>
-          <strong>
-            このサイト ({url.origin}) でGitLab Quick Navigatorを有効にしますか？
-          </strong>
-        </p>
-        <p>
-          有効にすると、このサイトでポップアップを開くたびに /api/v4
-          以下のエンドポイントへリクエストが発生します。GitLab以外のサイトでは使用しないでください。
-        </p>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            className="grow"
-            onPress={() => {
-              close();
-            }}
-          >
-            キャンセル
-          </Button>
-          <Button
-            size="sm"
-            color="primary"
-            className="grow"
-            onPress={() =>
-              void chrome.storage.local.set({
-                origins: { ...origins, [url.origin]: {} },
-              })
-            }
-          >
-            有効にする
-          </Button>
-        </div>
-      </div>
-    );
-
-  const { path, feature } = parsePathname(url.pathname);
-  if (path === undefined)
-    return (
-      <div className="flex flex-col gap-2 p-2 text-small">
-        <p>
-          <strong className="text-danger">
-            このページのURLからGroupまたはProjectを特定できません。
-          </strong>
-        </p>
-        <p>
-          GitLab上のGroupまたはProjectのページでポップアップを開いてください。
-        </p>
-      </div>
-    );
-
   return (
     <Main
       url={url}
-      token={siteOptions.token}
-      path={path}
-      feature={feature}
+      options={origins?.[url.origin]}
       starredGroups={groups ?? []}
       starredProjects={projects ?? []}
+      onEnable={() =>
+        void chrome.storage.local.set({
+          origins: { ...origins, [url.origin]: {} },
+        })
+      }
       onSetToken={(token) =>
         void chrome.storage.local.set({
           origins: { ...origins, [url.origin]: { token } },

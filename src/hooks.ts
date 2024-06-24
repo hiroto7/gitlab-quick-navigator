@@ -86,33 +86,41 @@ const getParent = (path: string) =>
 export const useClosestGroup = <T>(
   getEndpoint: (path: string) => string,
   origin: string,
-  path: string,
-  token: string | undefined,
+  path: string | undefined,
+  options: { token?: string } | undefined,
 ) => {
-  const parent = getParent(path);
   const {
     data,
     error,
     isValidating: isBaseValidating,
-  } = useSWR<T, unknown, [string, string, string | undefined]>(
-    [origin, getEndpoint(path), token],
+    isLoading: isBaseLoading,
+  } = useSWR<T, unknown, [string, string, string | undefined] | undefined>(
+    path !== undefined && options !== undefined
+      ? [origin, getEndpoint(path), options.token]
+      : undefined,
     ([origin, path, token]) => fetcher<T>(origin, path, token),
   );
+
+  const parent = path !== undefined ? getParent(path) : undefined;
   const {
     data: parentData,
     error: parentError,
     isValidating: isParentValidating,
+    isLoading: isParentLoading,
   } = useSWR<T, unknown, [string, string, string | undefined] | undefined>(
-    error !== undefined && parent !== undefined
-      ? [origin, getEndpoint(parent), token]
+    error !== undefined && parent !== undefined && options !== undefined
+      ? [origin, getEndpoint(parent), options.token]
       : undefined,
     ([origin, path, token]) => fetcher<T>(origin, path, token),
   );
 
   const isValidating = isBaseValidating || isParentValidating;
+  const isLoading =
+    (isBaseLoading && parentData === undefined) ||
+    (isParentLoading && data === undefined);
 
   if (error === undefined || parent === undefined)
-    return { data, error, isValidating };
+    return { data, error, isValidating, isLoading };
   else
     return {
       data: parentData,
@@ -121,6 +129,7 @@ export const useClosestGroup = <T>(
           ? undefined
           : new AggregateError([error, parentError]),
       isValidating,
+      isLoading,
     };
 };
 
