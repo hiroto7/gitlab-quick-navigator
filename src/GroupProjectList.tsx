@@ -218,7 +218,7 @@ const GroupProjectList: React.FC<{
       ]}
       aria-label="Group and Projects"
     >
-      <ListboxSection title="Group" showDivider>
+      <ListboxSection title="Groups" showDivider>
         {groupItems.map((item) => {
           if (item === "loading")
             return (
