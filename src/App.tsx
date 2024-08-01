@@ -1,5 +1,4 @@
 import { Button, Link, Progress } from "@nextui-org/react";
-import React from "react";
 import "./App.css";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
 import { Group, Project } from "./lib";
@@ -48,7 +47,18 @@ const Main: React.FC<{
     error: groupError,
     isValidating: isGroupValidating,
     isLoading: isGroupLoading,
-  } = useClosestGroup<Group>(groupDetailEndpoint, url.origin, path, options);
+  } = useClosestGroup<Group>(
+    groupDetailEndpoint,
+    options && url.origin,
+    path,
+    options?.token,
+    (loadedGroup) =>
+      onStarredGroupsUpdate(
+        starredGroups.map((starredGroup) =>
+          starredGroup.id === loadedGroup.id ? loadedGroup : starredGroup,
+        ),
+      ),
+  );
   const {
     data: projects,
     error: projectsError,
@@ -56,9 +66,18 @@ const Main: React.FC<{
     isLoading: isProjectsLoading,
   } = useClosestGroup<readonly Project[]>(
     groupProjectsEndpoint,
-    url.origin,
+    options && url.origin,
     path,
-    options,
+    options?.token,
+    (loadedProjects) =>
+      onStarredProjectsUpdate(
+        starredProjects.map(
+          (starredProject) =>
+            loadedProjects.find(
+              (loadedProject) => starredProject.id === loadedProject.id,
+            ) ?? starredProject,
+        ),
+      ),
   );
 
   return (
