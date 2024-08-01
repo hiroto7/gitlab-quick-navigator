@@ -100,20 +100,21 @@ const getParent = (path: string) =>
 
 export const useClosestGroup = <T>(
   getEndpoint: (path: string) => string,
-  origin: string,
+  origin: string | undefined,
   path: string | undefined,
-  options: { token?: string } | undefined,
+  token: string | undefined,
+  onSuccess: (data: T) => void,
 ) => {
   const {
     data,
     error,
     isValidating: isBaseValidating,
     isLoading: isBaseLoading,
-  } = useSWR<T, unknown, [string, string, string | undefined] | undefined>(
-    path !== undefined && options !== undefined
-      ? [origin, getEndpoint(path), options.token]
-      : undefined,
+  } = useSWR<T, unknown, [string, string, string | undefined] | false>(
+    origin !== undefined &&
+      path !== undefined && [origin, getEndpoint(path), token],
     ([origin, path, token]) => fetcher<T>(origin, path, token),
+    { onSuccess },
   );
 
   const parent = path !== undefined ? getParent(path) : undefined;
@@ -122,11 +123,12 @@ export const useClosestGroup = <T>(
     error: parentError,
     isValidating: isParentValidating,
     isLoading: isParentLoading,
-  } = useSWR<T, unknown, [string, string, string | undefined] | undefined>(
-    error !== undefined && parent !== undefined && options !== undefined
-      ? [origin, getEndpoint(parent), options.token]
-      : undefined,
+  } = useSWR<T, unknown, [string, string, string | undefined] | false>(
+    error !== undefined &&
+      origin !== undefined &&
+      parent !== undefined && [origin, getEndpoint(parent), token],
     ([origin, path, token]) => fetcher<T>(origin, path, token),
+    { onSuccess },
   );
 
   const isValidating = isBaseValidating || isParentValidating;
