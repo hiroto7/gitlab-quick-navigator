@@ -302,9 +302,11 @@ const GroupProjectList: React.FC<{
                 ? `${projectFeature}/${project.default_branch}`
                 : projectFeature,
             featureName:
-              projectFeature !== undefined
-                ? getFeatureName(projectFeature, PROJECT_FEATURE_NAMES)
-                : undefined,
+              projectFeature === "issues" && project.open_issues_count > 0
+                ? `Issues (${project.open_issues_count.toLocaleString()})`
+                : projectFeature !== undefined
+                  ? getFeatureName(projectFeature, PROJECT_FEATURE_NAMES)
+                  : undefined,
             starred: starred,
             onStar: (starred) => {
               if (starred)
