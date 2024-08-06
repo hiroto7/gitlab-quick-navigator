@@ -21,7 +21,10 @@ const getProvider = (stored: Record<string, State>) => (): Cache => {
 const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const cache = useChromeStorage<Record<string, State>>("session", false);
+  const { items: cache } = useChromeStorage<Record<string, State>>(
+    "session",
+    false,
+  );
   if (cache === undefined) return;
   return (
     <SWRConfig value={{ provider: getProvider(cache) }}>{children}</SWRConfig>

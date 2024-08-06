@@ -23,11 +23,13 @@ const groupProjectsEndpoint = (path: string) =>
 const Main: React.FC<{
   options: { token?: string } | undefined;
   url: URL;
-  starredGroups: Group[];
-  starredProjects: Project[];
+  starredGroups: readonly Group[];
+  starredProjects: readonly Project[];
   onEnable: () => void;
   onSetToken: (token: string) => void;
   onDeleteToken: () => void;
+  onStarredGroupsUpdate: (groups: readonly Group[]) => void;
+  onStarredProjectsUpdate: (projects: readonly Project[]) => void;
 }> = ({
   options,
   url,
@@ -36,6 +38,8 @@ const Main: React.FC<{
   onEnable,
   onSetToken,
   onDeleteToken,
+  onStarredGroupsUpdate,
+  onStarredProjectsUpdate,
 }) => {
   const { path, feature } = parsePathname(url.pathname);
 
@@ -50,7 +54,7 @@ const Main: React.FC<{
     error: projectsError,
     isValidating: isProjectsValidating,
     isLoading: isProjectsLoading,
-  } = useClosestGroup<Project[]>(
+  } = useClosestGroup<readonly Project[]>(
     groupProjectsEndpoint,
     url.origin,
     path,
@@ -140,6 +144,8 @@ const Main: React.FC<{
         path={path}
         feature={feature}
         search={url.search}
+        onStarredGroupsUpdate={onStarredGroupsUpdate}
+        onStarredProjectsUpdate={onStarredProjectsUpdate}
       />
     </>
   );
@@ -147,10 +153,10 @@ const Main: React.FC<{
 
 const App: React.FC = () => {
   const url = useCurrentUrl();
-  const storedData = useChromeStorage<{
+  const { items: storedData, set } = useChromeStorage<{
     origins?: Record<string, { token?: string }>;
-    groups?: Group[];
-    projects?: Project[];
+    groups?: readonly Group[];
+    projects?: readonly Project[];
   }>("local", true);
 
   if (url === undefined || storedData === undefined) return;
@@ -163,21 +169,15 @@ const App: React.FC = () => {
       options={origins?.[url.origin]}
       starredGroups={groups ?? []}
       starredProjects={projects ?? []}
-      onEnable={() =>
-        void chrome.storage.local.set({
-          origins: { ...origins, [url.origin]: {} },
-        })
-      }
+      onEnable={() => void set({ origins: { ...origins, [url.origin]: {} } })}
       onSetToken={(token) =>
-        void chrome.storage.local.set({
-          origins: { ...origins, [url.origin]: { token } },
-        })
+        void set({ origins: { ...origins, [url.origin]: { token } } })
       }
       onDeleteToken={() =>
-        void chrome.storage.local.set({
-          origins: { ...origins, [url.origin]: {} },
-        })
+        void set({ origins: { ...origins, [url.origin]: {} } })
       }
+      onStarredGroupsUpdate={(groups) => void set({ groups })}
+      onStarredProjectsUpdate={(projects) => void set({ projects })}
     />
   );
 };

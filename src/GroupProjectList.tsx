@@ -24,10 +24,12 @@ const GroupProjectList: React.FC<{
   path: string | undefined;
   feature: string | undefined;
   search: string;
-  starredGroups: Group[];
-  starredProjects: Project[];
+  starredGroups: readonly Group[];
+  starredProjects: readonly Project[];
   currentGroup: Group | "loading" | undefined;
-  currentGroupProjects: Project[] | "loading" | undefined;
+  currentGroupProjects: readonly Project[] | "loading" | undefined;
+  onStarredGroupsUpdate: (groups: readonly Group[]) => void;
+  onStarredProjectsUpdate: (projects: readonly Project[]) => void;
 }> = ({
   path,
   feature,
@@ -36,6 +38,8 @@ const GroupProjectList: React.FC<{
   starredProjects: currentStarredProjects,
   currentGroup: group,
   currentGroupProjects: projects,
+  onStarredGroupsUpdate,
+  onStarredProjectsUpdate,
 }) => {
   const {
     list: starredGroups,
@@ -144,9 +148,10 @@ const GroupProjectList: React.FC<{
     ...[...starredGroups, ...(typeof group === "object" ? [group] : [])].map(
       (group) => group.full_path,
     ),
-    ...[...starredProjects, ...(Array.isArray(projects) ? projects : [])].map(
-      (project) => project.path_with_namespace,
-    ),
+    ...[
+      ...starredProjects,
+      ...(typeof projects === "object" ? projects : []),
+    ].map((project) => project.path_with_namespace),
   ];
 
   const groupItems = [
@@ -174,7 +179,7 @@ const GroupProjectList: React.FC<{
         onProjectDragEnter(index);
       },
     })),
-    ...(Array.isArray(projects)
+    ...(typeof projects === "object"
       ? projects
           .filter(
             (project) =>
@@ -241,24 +246,20 @@ const GroupProjectList: React.FC<{
                 : undefined,
             starred: starred,
             onStar: (starred) => {
-              if (starred)
-                void chrome.storage.local.set({
-                  groups: [...starredGroups, group],
-                });
+              if (starred) onStarredGroupsUpdate([...starredGroups, group]);
               else
-                void chrome.storage.local.set({
-                  groups: starredGroups.filter(
+                onStarredGroupsUpdate(
+                  starredGroups.filter(
                     (starredGroup) => starredGroup.id !== group.id,
                   ),
-                });
+                );
             },
             onDragStart: () => {
               onGroupDragStart(group);
             },
             onDragEnd: onGroupDragEnd,
             onDragEnter,
-            onDrop: () =>
-              void chrome.storage.local.set({ groups: starredGroups }),
+            onDrop: () => onStarredGroupsUpdate(starredGroups),
           });
         })}
       </ListboxSection>
@@ -306,23 +307,20 @@ const GroupProjectList: React.FC<{
             starred: starred,
             onStar: (starred) => {
               if (starred)
-                void chrome.storage.local.set({
-                  projects: [...starredProjects, project],
-                });
+                onStarredProjectsUpdate([...starredProjects, project]);
               else
-                void chrome.storage.local.set({
-                  projects: starredProjects.filter(
+                onStarredProjectsUpdate(
+                  starredProjects.filter(
                     (starredProject) => starredProject.id !== project.id,
                   ),
-                });
+                );
             },
             onDragStart: () => {
               onProjectDragStart(project);
             },
             onDragEnd: onProjectDragEnd,
             onDragEnter,
-            onDrop: () =>
-              void chrome.storage.local.set({ projects: starredProjects }),
+            onDrop: () => onStarredProjectsUpdate(starredProjects),
           });
         })}
       </ListboxSection>
