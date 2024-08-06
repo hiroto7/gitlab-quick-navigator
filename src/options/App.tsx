@@ -2,7 +2,7 @@ import { Button, Listbox, ListboxItem } from "@nextui-org/react";
 import { useChromeStorage } from "../hooks";
 
 const App: React.FC = () => {
-  const storedData = useChromeStorage<{
+  const { items: storedData, set } = useChromeStorage<{
     origins?: Record<string, { token?: string }>;
   }>("local", true);
 
@@ -36,7 +36,7 @@ const App: React.FC = () => {
                       `${origin} でGitLab Quick Navigatorを無効化すると、設定したアクセストークンも削除されます。`,
                     )
                   )
-                    void chrome.storage.local.set({
+                    void set({
                       origins: Object.fromEntries(
                         Object.entries(options).filter(
                           ([key]) => key !== origin,

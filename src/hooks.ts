@@ -51,6 +51,16 @@ export const useChromeStorage = <T extends Record<string, unknown>>(
     setItems(items);
   }, [area]);
 
+  const set = useCallback(
+    (items: Partial<T>) => chrome.storage[area].set(items),
+    [area],
+  );
+
+  const remove = useCallback(
+    (key: keyof T & string) => chrome.storage[area].remove(key),
+    [area],
+  );
+
   useEffect(() => void load(), [load]);
 
   useEffect(() => {
@@ -61,7 +71,7 @@ export const useChromeStorage = <T extends Record<string, unknown>>(
     };
   }, [area, load, watch]);
 
-  return items;
+  return { items, set, remove };
 };
 
 const fetcher = async <T>(
@@ -133,7 +143,7 @@ export const useClosestGroup = <T>(
     };
 };
 
-export const useDrag = <T>(currentList: T[]) => {
+export const useDrag = <T>(currentList: readonly T[]) => {
   const [draggedItem, setDraggedItem] = useState<T>();
   const [to, setTo] = useState<number>();
 
