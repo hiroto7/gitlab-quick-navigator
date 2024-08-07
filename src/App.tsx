@@ -74,7 +74,7 @@ const Main: React.FC<{
         aria-label="Loading..."
       />
       {options === undefined ? (
-        <div className="m-2 flex flex-col gap-2 rounded-medium bg-content1 p-2">
+        <div className="m-2 flex flex-col gap-2 rounded-medium border-small border-divider bg-content2 p-2">
           <p className="text-small font-bold">
             このサイトでGitLab Quick Navigatorを有効にしますか？
           </p>
@@ -91,7 +91,7 @@ const Main: React.FC<{
           </Button>
         </div>
       ) : path === undefined ? (
-        <div className="m-2 flex flex-col gap-2 rounded-medium bg-content1 p-2">
+        <div className="m-2 flex flex-col gap-2 rounded-medium border-small border-divider bg-content2 p-2">
           <p className="text-small font-bold text-warning">
             このページのURLからGroupやProjectを特定できません
           </p>
@@ -100,7 +100,7 @@ const Main: React.FC<{
           </p>
         </div>
       ) : groupError || projectsError ? (
-        <div className="m-2 flex flex-col gap-2 rounded-medium bg-content1 p-2">
+        <div className="m-2 flex flex-col gap-2 rounded-medium border-small border-divider bg-content2 p-2">
           <p className="text-small font-bold text-warning">
             このページでGroupやProjectの一覧を取得できません
           </p>
