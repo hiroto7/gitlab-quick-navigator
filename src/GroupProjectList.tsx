@@ -109,6 +109,7 @@ const GroupProjectList: React.FC<{
               isIconOnly
               variant="light"
               size="sm"
+              color={starred ? "success" : undefined}
               className="hidden group-data-[hover=true]:inline-flex group-data-[selected=true]:inline-flex group-data-[starred=true]:inline-flex"
               onPress={() => {
                 onStar(!starred);
