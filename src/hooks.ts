@@ -40,7 +40,7 @@ export const useCurrentUrl = () => {
   return url;
 };
 
-export const useChromeStorage = <T extends Record<string, unknown>>(
+export const useChromeStorage = <T extends object>(
   area: chrome.storage.AreaName,
   watch: boolean,
 ) => {
@@ -52,7 +52,12 @@ export const useChromeStorage = <T extends Record<string, unknown>>(
   }, [area]);
 
   const set = useCallback(
-    (items: Partial<T>) => chrome.storage[area].set(items),
+    async (items: Partial<T>) => {
+      setItems((currentItems) =>
+        currentItems !== undefined ? { ...currentItems, ...items } : undefined,
+      );
+      await chrome.storage[area].set(items);
+    },
     [area],
   );
 
