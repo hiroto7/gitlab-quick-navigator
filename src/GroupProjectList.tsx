@@ -12,13 +12,23 @@ import {
   GROUP_FEATURES,
   GROUP_FEATURE_NAMES,
   Group,
+  GroupFeature,
   PROJECT_FEATURES,
   PROJECT_FEATURE_NAMES,
   Project,
+  ProjectFeature,
   getFeatureName,
   isProjectFeatureAvailable,
 } from "./lib";
 import { useDrag } from "./hooks";
+
+const SIMILAR_FEATURE_PAIRS: readonly {
+  group: GroupFeature;
+  project: ProjectFeature;
+}[] = [
+  { group: "group_members", project: "project_members" },
+  { group: "issues_analytics", project: "analytics/issues_analytics" },
+];
 
 const GroupProjectList: React.FC<{
   path: string | undefined;
@@ -134,15 +144,14 @@ const GroupProjectList: React.FC<{
     [search],
   );
 
-  const groupFeature: (typeof GROUP_FEATURES)[number] | undefined =
+  const groupFeature: GroupFeature | undefined =
     feature !== undefined
-      ? feature.startsWith("project_members")
-        ? "group_members"
-        : feature.startsWith("analytics/issues_analytics")
-          ? "issues_analytics"
-          : GROUP_FEATURES.findLast((groupFeature) =>
-              feature.startsWith(groupFeature),
-            )
+      ? (SIMILAR_FEATURE_PAIRS.find(({ project }) =>
+          feature.startsWith(project),
+        )?.group ??
+        GROUP_FEATURES.findLast((groupFeature) =>
+          feature.startsWith(groupFeature),
+        ))
       : undefined;
 
   const allKeys = [
@@ -246,15 +255,14 @@ const GroupProjectList: React.FC<{
                 ? getFeatureName(groupFeature, GROUP_FEATURE_NAMES)
                 : undefined,
             starred: starred,
-            onStar: (starred) => {
-              if (starred) onStarredGroupsUpdate([...starredGroups, group]);
-              else
-                onStarredGroupsUpdate(
-                  starredGroups.filter(
-                    (starredGroup) => starredGroup.id !== group.id,
-                  ),
-                );
-            },
+            onStar: (starred) =>
+              onStarredGroupsUpdate(
+                starred
+                  ? [...starredGroups, group]
+                  : starredGroups.filter(
+                      (starredGroup) => starredGroup.id !== group.id,
+                    ),
+              ),
             onDragStart: () => {
               onGroupDragStart(group);
             },
@@ -275,20 +283,17 @@ const GroupProjectList: React.FC<{
 
           const { project, starred, onDragEnter } = item;
 
-          const projectFeature: (typeof PROJECT_FEATURES)[number] | undefined =
+          const projectFeature: ProjectFeature | undefined =
             feature !== undefined
-              ? feature.startsWith("group_members")
-                ? "project_members"
-                : feature.startsWith("issues_analytics")
-                  ? "analytics/issues_analytics"
-                  : PROJECT_FEATURES.findLast(
-                      (projectFeature) =>
-                        (feature.startsWith(projectFeature) &&
-                          isProjectFeatureAvailable[projectFeature]?.(
-                            project,
-                          )) ??
-                        true,
-                    )
+              ? (SIMILAR_FEATURE_PAIRS.find(({ group }) =>
+                  feature.startsWith(group),
+                )?.project ??
+                PROJECT_FEATURES.findLast(
+                  (projectFeature) =>
+                    feature.startsWith(projectFeature) &&
+                    (isProjectFeatureAvailable[projectFeature]?.(project) ??
+                      true),
+                ))
               : undefined;
 
           return getListboxItem({
@@ -308,16 +313,14 @@ const GroupProjectList: React.FC<{
                   ? getFeatureName(projectFeature, PROJECT_FEATURE_NAMES)
                   : undefined,
             starred: starred,
-            onStar: (starred) => {
-              if (starred)
-                onStarredProjectsUpdate([...starredProjects, project]);
-              else
-                onStarredProjectsUpdate(
-                  starredProjects.filter(
-                    (starredProject) => starredProject.id !== project.id,
-                  ),
-                );
-            },
+            onStar: (starred) =>
+              onStarredProjectsUpdate(
+                starred
+                  ? [...starredProjects, project]
+                  : starredProjects.filter(
+                      (starredProject) => starredProject.id !== project.id,
+                    ),
+              ),
             onDragStart: () => {
               onProjectDragStart(project);
             },

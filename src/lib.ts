@@ -180,9 +180,10 @@ export const PROJECT_FEATURES = [
   "usage_quotas",
 ] as const;
 
-export const GROUP_FEATURE_NAMES: Partial<
-  Record<(typeof GROUP_FEATURES)[number], string>
-> = {
+export type GroupFeature = (typeof GROUP_FEATURES)[number];
+export type ProjectFeature = (typeof PROJECT_FEATURES)[number];
+
+export const GROUP_FEATURE_NAMES: Partial<Record<GroupFeature, string>> = {
   boards: "Issue Boards",
   roadmap: "Epics Roadmap",
   cadences: "Iteration cadences",
@@ -207,9 +208,7 @@ export const GROUP_FEATURE_NAMES: Partial<
   billings: "Billing",
 };
 
-export const PROJECT_FEATURE_NAMES: Partial<
-  Record<(typeof PROJECT_FEATURES)[number], string>
-> = {
+export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
   project_members: "Members",
   boards: "Issue Boards",
   cadences: "Iteration cadences",
@@ -250,7 +249,7 @@ export const PROJECT_FEATURE_NAMES: Partial<
 };
 
 export const isProjectFeatureAvailable: Partial<
-  Record<(typeof PROJECT_FEATURES)[number], (project: Project) => boolean>
+  Record<ProjectFeature, (project: Project) => boolean>
 > = {
   issues: (project) => project.issues_access_level !== "disabled",
   boards: (project) => project.issues_access_level !== "disabled",
