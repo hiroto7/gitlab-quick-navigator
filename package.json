@@ -14,8 +14,8 @@
     "@nextui-org/react": "^2.4.6",
     "framer-motion": "^11.3.28",
     "next-themes": "^0.3.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "19.0.0-rc-a960b92c-20240819",
+    "react-dom": "19.0.0-rc-a960b92c-20240819",
     "swr": "^2.2.5"
   },
   "devDependencies": {
@@ -28,6 +28,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
+    "babel-plugin-react-compiler": "0.0.0-experimental-7d62301-20240819",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-compiler": "0.0.0-experimental-8e3b87c-20240819",
