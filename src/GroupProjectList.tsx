@@ -136,6 +136,10 @@ const GroupProjectList: React.FC<{
           onDragEnd={onDragEnd}
           onDragEnter={onDragEnter}
           onDrop={onDrop}
+          classNames={{
+            title: "truncate",
+            wrapper: "items-stretch overflow-x-hidden",
+          }}
         >
           {name}
         </ListboxItem>
