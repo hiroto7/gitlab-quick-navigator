@@ -20,6 +20,78 @@ const groupDetailEndpoint = (path: string) =>
 const groupProjectsEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`;
 
+const Alert1: React.FC<{ origin: string; onEnable: () => void }> = ({
+  origin,
+  onEnable,
+}) => (
+  <div className="flex flex-col gap-2 rounded-medium border-small border-divider bg-content2 p-2">
+    <p className="text-small font-bold">
+      このサイトでGitLab Quick Navigatorを有効にしますか？
+    </p>
+    <p className="text-tiny">
+      有効にすると、このサイト ({origin}) でGroupやProjectの一覧を表示します。
+    </p>
+    <p className="text-tiny">
+      ポップアップを開くたびに /api/v4
+      以下のエンドポイントへリクエストが発生するため、GitLab以外のサイトでは有効にしないでください。
+    </p>
+    <Button size="sm" color="primary" className="grow" onPress={onEnable}>
+      有効にする
+    </Button>
+  </div>
+);
+
+const Alert2: React.FC = () => (
+  <div className="flex flex-col gap-2 rounded-medium border-small border-divider bg-content2 p-2">
+    <p className="text-small font-bold text-warning">
+      このページのURLからGroupやProjectを特定できません
+    </p>
+    <p className="text-tiny">
+      GroupまたはProjectのページでポップアップを開くと、そのページのGroupやProjectの一覧を表示します。
+    </p>
+  </div>
+);
+
+const Alert3: React.FC<{
+  origin: string;
+  onSetToken: (token: string) => void;
+  onDeleteToken: () => void;
+}> = ({ origin, onSetToken, onDeleteToken }) => (
+  <div className="flex flex-col gap-2 rounded-medium border-small border-divider bg-content2 p-2">
+    <p className="text-small font-bold text-warning">
+      このページでGroupやProjectの一覧を取得できません
+    </p>
+    <p className="text-tiny">
+      このページのURLに対応していないか、権限がありません。プライベートなGroupやProjectを表示するには、アクセストークンを設定してください。
+    </p>
+    <Button
+      size="sm"
+      color="primary"
+      onPress={() => {
+        const token = prompt(
+          `${origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。`,
+        );
+        if (token === null) return;
+
+        if (token !== "") onSetToken(token);
+        else onDeleteToken();
+      }}
+    >
+      アクセストークンを設定
+    </Button>
+    <p>
+      <Link
+        size="sm"
+        showAnchorIcon
+        isExternal
+        href={`${origin}/-/user_settings/personal_access_tokens?name=GitLab+Quick+Navigator&scopes=read_api`}
+      >
+        アクセストークンを発行
+      </Link>
+    </p>
+  </div>
+);
+
 const Main: React.FC<{
   options: { token?: string } | undefined;
   url: URL;
@@ -94,64 +166,20 @@ const Main: React.FC<{
         aria-label="Loading..."
       />
       {options === undefined ? (
-        <div className="m-2 flex flex-col gap-2 rounded-medium border-small border-divider bg-content2 p-2">
-          <p className="text-small font-bold">
-            このサイトでGitLab Quick Navigatorを有効にしますか？
-          </p>
-          <p className="text-tiny">
-            有効にすると、このサイト ({url.origin})
-            でGroupやProjectの一覧を表示します。
-          </p>
-          <p className="text-tiny">
-            ポップアップを開くたびに /api/v4
-            以下のエンドポイントへリクエストが発生するため、GitLab以外のサイトでは有効にしないでください。
-          </p>
-          <Button size="sm" color="primary" className="grow" onPress={onEnable}>
-            有効にする
-          </Button>
+        <div className="m-2">
+          <Alert1 origin={url.origin} onEnable={onEnable} />
         </div>
       ) : path === undefined ? (
-        <div className="m-2 flex flex-col gap-2 rounded-medium border-small border-divider bg-content2 p-2">
-          <p className="text-small font-bold text-warning">
-            このページのURLからGroupやProjectを特定できません
-          </p>
-          <p className="text-tiny">
-            GroupまたはProjectのページでポップアップを開くと、そのページのGroupやProjectの一覧を表示します。
-          </p>
+        <div className="m-2">
+          <Alert2 />
         </div>
       ) : groupError || projectsError ? (
-        <div className="m-2 flex flex-col gap-2 rounded-medium border-small border-divider bg-content2 p-2">
-          <p className="text-small font-bold text-warning">
-            このページでGroupやProjectの一覧を取得できません
-          </p>
-          <p className="text-tiny">
-            このページのURLに対応していないか、権限がありません。プライベートなGroupやProjectを表示するには、アクセストークンを設定してください。
-          </p>
-          <Button
-            size="sm"
-            color="primary"
-            onPress={() => {
-              const token = prompt(
-                `${url.origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。`,
-              );
-              if (token === null) return;
-
-              if (token !== "") onSetToken(token);
-              else onDeleteToken();
-            }}
-          >
-            アクセストークンを設定
-          </Button>
-          <p>
-            <Link
-              size="sm"
-              showAnchorIcon
-              isExternal
-              href={`${url.origin}/-/user_settings/personal_access_tokens?name=GitLab+Quick+Navigator&scopes=read_api`}
-            >
-              アクセストークンを発行
-            </Link>
-          </p>
+        <div className="m-2">
+          <Alert3
+            origin={url.origin}
+            onSetToken={onSetToken}
+            onDeleteToken={onDeleteToken}
+          />
         </div>
       ) : (
         <></>
