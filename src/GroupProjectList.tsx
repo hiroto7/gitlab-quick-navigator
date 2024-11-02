@@ -1,13 +1,14 @@
 import {
   Avatar,
   Button,
+  Input,
   Listbox,
   ListboxItem,
   ListboxSection,
   Skeleton,
 } from "@nextui-org/react";
-import React, { useCallback } from "react";
-import { StarIcon, StarredIcon } from "./icons";
+import React, { ReactNode, useCallback } from "react";
+import { SearchIcon, StarIcon, StarredIcon } from "./icons";
 import {
   GROUP_FEATURES,
   GROUP_FEATURE_NAMES,
@@ -38,6 +39,7 @@ const GroupProjectList: React.FC<{
   starredProjects: readonly Project[];
   currentGroup: Group | "loading" | undefined;
   currentGroupProjects: readonly Project[] | "loading" | undefined;
+  topContent: ReactNode;
   onStarredGroupsUpdate: (groups: readonly Group[]) => void;
   onStarredProjectsUpdate: (projects: readonly Project[]) => void;
 }> = ({
@@ -48,6 +50,7 @@ const GroupProjectList: React.FC<{
   starredProjects: currentStarredProjects,
   currentGroup: group,
   currentGroupProjects: projects,
+  topContent,
   onStarredGroupsUpdate,
   onStarredProjectsUpdate,
 }) => {
@@ -236,6 +239,7 @@ const GroupProjectList: React.FC<{
           : []),
       ]}
       aria-label="Group and Projects"
+      topContent={topContent}
     >
       <ListboxSection title="Groups" showDivider>
         {groupItems.map((item) => {

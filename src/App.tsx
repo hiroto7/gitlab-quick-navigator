@@ -1,9 +1,11 @@
-import { Button, Link, Progress } from "@nextui-org/react";
-import React from "react";
+import { Button, Input, Link, Progress } from "@nextui-org/react";
+import React, { useState } from "react";
 import "./App.css";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
 import { Group, Project } from "./lib";
 import GroupProjectList from "./GroupProjectList";
+import { SearchIcon } from "./icons";
+import useSWR from "swr";
 
 const re =
   /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?/;
@@ -153,6 +155,25 @@ const Main: React.FC<{
       ),
   );
 
+  const isValidating = isGroupValidating || isProjectsValidating;
+
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+
+  const {
+    data,
+    error,
+    isLoading,
+    isValidating: isSearchValidating,
+  } = useSWR(search, (search) =>
+    fetch(
+      new URL(`/api/v4/projects?search=${search}`, url.origin),
+      options?.token !== undefined
+        ? { headers: { "PRIVATE-TOKEN": options.token } }
+        : undefined,
+    ).then((response) => response.json()),
+  );
+
   return (
     <>
       <Progress
@@ -161,7 +182,7 @@ const Main: React.FC<{
         radius="none"
         isIndeterminate
         className={
-          !isGroupValidating && !isProjectsValidating ? "invisible" : undefined
+          !isValidating && !isSearchValidating ? "invisible" : undefined
         }
         aria-label="Loading..."
       />
@@ -188,12 +209,37 @@ const Main: React.FC<{
         starredGroups={starredGroups}
         starredProjects={starredProjects}
         currentGroup={!isGroupLoading ? group : "loading"}
-        currentGroupProjects={!isProjectsLoading ? projects : "loading"}
+        currentGroupProjects={
+          search.length > 0
+            ? !isLoading
+              ? data
+              : "loading"
+            : !isProjectsLoading
+              ? projects
+              : "loading"
+        }
         path={path}
         feature={feature}
         search={url.search}
         onStarredGroupsUpdate={onStarredGroupsUpdate}
         onStarredProjectsUpdate={onStarredProjectsUpdate}
+        topContent={
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              setSearch(searchInput);
+            }}
+          >
+            <Input
+              autoFocus
+              isClearable
+              className="p-1"
+              startContent={<SearchIcon />}
+              placeholder="GroupやProjectを検索"
+              onValueChange={setSearchInput}
+            />
+          </form>
+        }
       />
     </>
   );
