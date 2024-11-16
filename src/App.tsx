@@ -5,11 +5,16 @@ import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
 import { Group, Project } from "./lib";
 import GroupProjectList from "./GroupProjectList";
 
-const re =
-  /^\/(?:dashboard(?:\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?|(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?)/;
+const NAME_PATTERN = String.raw`[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*`;
+new RegExp(NAME_PATTERN);
+const FEATURE_PATTERN = String.raw`(?<feature>[a-z_]+(?:\/[a-z_]+)*)`;
+new RegExp(FEATURE_PATTERN);
+const RE = new RegExp(
+  String.raw`^\/(?:dashboard(?:\/${FEATURE_PATTERN})?|(?:groups\/)?(?<path>${NAME_PATTERN}(?:\/${NAME_PATTERN})*)(?:\/-\/${FEATURE_PATTERN})?)`,
+);
 
 const parsePathname = (pathname: string) => {
-  const array = re.exec(pathname);
+  const array = RE.exec(pathname);
   const { path, feature } = array?.groups ?? {};
   return { path, feature };
 };
