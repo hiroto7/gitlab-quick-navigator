@@ -6,7 +6,7 @@ import { Group, Project } from "./lib";
 import GroupProjectList from "./GroupProjectList";
 
 const re =
-  /^\/(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?/;
+  /^\/(?:dashboard(?:\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?|(?:groups\/)?(?<path>[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*(?:\/[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*)*)(?:\/-\/(?<feature>[a-z_]+(?:\/[a-z_]+)*))?)/;
 
 const parsePathname = (pathname: string) => {
   const array = re.exec(pathname);
