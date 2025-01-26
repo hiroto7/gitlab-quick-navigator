@@ -337,3 +337,15 @@ export const move = <T>(array: readonly T[], from: number, to: number) => {
   result.splice(to, 0, array[from]!);
   return result;
 };
+
+export const NAME_PATTERN = String.raw`[a-zA-Z0-9](?:[a-zA-Z0-9_.-]?[a-zA-Z0-9])*`;
+export const FEATURE_PATTERN = String.raw`(?<feature>[a-z_]+(?:\/[a-z_]+)*)`;
+const RE = new RegExp(
+  String.raw`^\/(?:dashboard(?:\/${FEATURE_PATTERN})?|(?:groups\/)?(?<path>${NAME_PATTERN}(?:\/${NAME_PATTERN})*)(?:\/-\/${FEATURE_PATTERN})?)`,
+);
+
+export const parsePathname = (pathname: string) => {
+  const array = RE.exec(pathname);
+  const { path, feature } = array?.groups ?? {};
+  return { path, feature };
+};
