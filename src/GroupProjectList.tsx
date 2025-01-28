@@ -5,7 +5,7 @@ import {
   ListboxItem,
   ListboxSection,
   Skeleton,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import React, { useCallback } from "react";
 import { StarIcon, StarredIcon } from "./icons";
 import {

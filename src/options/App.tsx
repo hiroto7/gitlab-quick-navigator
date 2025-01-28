@@ -1,4 +1,4 @@
-import { Button, Listbox, ListboxItem } from "@nextui-org/react";
+import { Button, Listbox, ListboxItem } from "@heroui/react";
 import { useChromeStorage } from "../hooks";
 
 const App: React.FC = () => {

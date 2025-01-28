@@ -1,4 +1,4 @@
-import { Button, Link, Progress } from "@nextui-org/react";
+import { Button, Link, Progress } from "@heroui/react";
 import React from "react";
 import "./App.css";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";

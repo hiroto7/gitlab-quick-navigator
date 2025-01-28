@@ -2,7 +2,7 @@
 
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { NextUIProvider } from "@nextui-org/react";
+import { HeroUIProvider } from "@heroui/react";
 import { ThemeProvider } from "next-themes";
 import App from "./App.tsx";
 import "./index.css";
@@ -11,7 +11,7 @@ import { SWRConfig } from "swr";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <NextUIProvider>
+    <HeroUIProvider>
       <ThemeProvider>
         <CacheProvider>
           <SWRConfig value={{ shouldRetryOnError: false }}>
@@ -19,6 +19,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           </SWRConfig>
         </CacheProvider>
       </ThemeProvider>
-    </NextUIProvider>
+    </HeroUIProvider>
   </React.StrictMode>,
 );
