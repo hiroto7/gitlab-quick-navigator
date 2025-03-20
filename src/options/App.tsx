@@ -44,7 +44,7 @@ const App: React.FC = () => {
                       ),
                     });
                 }}
-                className="flex-shrink-0"
+                className="shrink-0"
               >
                 無効にする
               </Button>

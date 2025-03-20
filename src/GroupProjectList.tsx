@@ -101,7 +101,7 @@ const GroupProjectList: React.FC<{
               size="sm"
               name={name}
               {...(avatar !== null ? { src: avatar } : {})}
-              className="flex-shrink-0"
+              className="shrink-0"
             />
           }
           data-starred={starred}
