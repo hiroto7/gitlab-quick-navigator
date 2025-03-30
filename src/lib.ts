@@ -349,9 +349,12 @@ export const isProjectFeatureAvailable: Partial<
   boards: isEnabledOrPrivate("issues"),
   incidents: isEnabledOrPrivate("issues"),
   "issues/service_desk": isEnabledOrPrivate("issues"),
+  "issues/new": isEnabledOrPrivate("issues"),
 
   merge_requests: isEnabledOrPrivate("merge_requests"),
+  "merge_requests/new": isEnabledOrPrivate("merge_requests"),
   snippets: isEnabledOrPrivate("snippets"),
+  "snippets/new": isEnabledOrPrivate("snippets"),
   wikis: isEnabledOrPrivate("wiki"),
 
   value_stream_analytics: isEnabledOrPrivate("analytics"),
@@ -361,6 +364,8 @@ export const isProjectFeatureAvailable: Partial<
   pipeline_schedules: isEnabledOrPrivate("builds"),
   artifacts: isEnabledOrPrivate("builds"),
   "settings/ci_cd": isEnabledOrPrivate("builds"),
+  "pipelines/new": isEnabledOrPrivate("builds"),
+  "pipeline_schedules/new": isEnabledOrPrivate("builds"),
 
   clusters: isEnabledOrPrivate("infrastructure"),
   terraform: isEnabledOrPrivate("infrastructure"),
@@ -368,11 +373,13 @@ export const isProjectFeatureAvailable: Partial<
 
   "ml/experiments": isEnabledOrPrivate("model_experiments"),
   "ml/models": isEnabledOrPrivate("model_experiments"),
+  "ml/models/new": isEnabledOrPrivate("model_experiments"),
 
   error_tracking: isEnabledOrPrivate("monitor"),
   alert_management: isEnabledOrPrivate("monitor"),
 
   releases: isEnabledOrPrivate("releases"),
+  "releases/new": isEnabledOrPrivate("releases"),
 
   tree: isEnabledOrPrivate("repository"),
   branches: isEnabledOrPrivate("repository"),
@@ -381,6 +388,8 @@ export const isProjectFeatureAvailable: Partial<
   network: isEnabledOrPrivate("repository"),
   compare: isEnabledOrPrivate("repository"),
   "ci/editor": isEnabledOrPrivate("repository"),
+  "branches/new": isEnabledOrPrivate("repository"),
+  "tags/new": isEnabledOrPrivate("repository"),
 
   labels: (project) =>
     project.issues_access_level !== "disabled" ||
@@ -388,12 +397,24 @@ export const isProjectFeatureAvailable: Partial<
   milestones: (project) =>
     project.issues_access_level !== "disabled" ||
     project.merge_requests_access_level !== "disabled",
+  "labels/new": (project) =>
+    project.issues_access_level !== "disabled" ||
+    project.merge_requests_access_level !== "disabled",
+  "milestones/new": (project) =>
+    project.issues_access_level !== "disabled" ||
+    project.merge_requests_access_level !== "disabled",
 
   environments: (project) =>
     project.builds_access_level !== "disabled" &&
     project.environments_access_level !== "disabled",
+  "environments/new": (project) =>
+    project.builds_access_level !== "disabled" &&
+    project.environments_access_level !== "disabled",
 
   feature_flags: (project) =>
+    project.feature_flags_access_level !== "disabled" &&
+    project.repository_access_level !== "disabled",
+  "feature_flags/new": (project) =>
     project.feature_flags_access_level !== "disabled" &&
     project.repository_access_level !== "disabled",
 
