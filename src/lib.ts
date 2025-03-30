@@ -87,6 +87,7 @@ export const GROUP_FEATURES = [
 
   // Operate
   "dependency_proxy",
+  "clusters",
   "terraform_module_registry",
 
   // Analyze
@@ -105,6 +106,7 @@ export const GROUP_FEATURES = [
   "settings/packages_and_registries",
   "usage_quotas",
   "billings",
+  "settings/workspaces",
 ] as const;
 
 export const PROJECT_FEATURES = [
@@ -229,8 +231,11 @@ export const GROUP_FEATURE_NAMES: Partial<Record<GroupFeature, string>> = {
   "security/vulnerabilities": "Vulnerability Report",
 
   // Deploy
-  packages: "Package Registry",
-  container_registries: "Container Registry",
+  packages: "Package registry",
+  container_registries: "Container registry",
+
+  // Operate
+  clusters: "Kubernetes",
 
   // Analyze
   issues_analytics: "Issue Analytics",
@@ -238,14 +243,15 @@ export const GROUP_FEATURE_NAMES: Partial<Record<GroupFeature, string>> = {
   // Settings
   edit: "General settings",
   "settings/integrations": "Group-level integration management",
-  hooks: "Group Hooks",
-  "settings/access_tokens": "Access Tokens",
+  hooks: "Group hooks",
+  "settings/access_tokens": "Access tokens",
   "settings/repository": "Repository Settings",
   "settings/ci_cd": "CI/CD Settings",
   "settings/applications": "Group applications",
   "settings/packages_and_registries": "Packages and registries settings",
   usage_quotas: "Usage",
   billings: "Billing",
+  "settings/workspaces": "Workspaces Settings",
 };
 
 export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
@@ -266,8 +272,7 @@ export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
 
   // Code
   tree: "Repository",
-  branches: "Repository / Branches",
-  network: "Graph",
+  network: "Repository graph",
   compare: "Compare revisions",
 
   "merge_requests/new": "Merge requests / New merge request",
@@ -276,7 +281,7 @@ export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
   "snippets/new": "Snippets / New snippet",
 
   // Build
-  "ci/editor": "Pipeline Editor",
+  "ci/editor": "Pipeline editor",
   pipeline_schedules: "Schedules",
   "quality/test_cases": "Test cases",
 
@@ -288,7 +293,7 @@ export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
   "security/configuration": "Security configuration",
 
   // Deploy
-  packages: "Package Registry",
+  packages: "Package registry",
   "analytics/code_reviews": "Code Review",
   "analytics/issues_analytics": "Issue Analytics",
   "ml/models": "Model registry",
@@ -314,8 +319,8 @@ export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
 
   // Settings
   "settings/integrations": "Integration Settings",
-  hooks: "Webhook Settings",
-  "settings/access_tokens": "Access Tokens",
+  hooks: "Webhook settings",
+  "settings/access_tokens": "Access tokens",
   "settings/repository": "Repository Settings",
   "settings/merge_requests": "Merge requests",
   "settings/ci_cd": "CI/CD Settings",
