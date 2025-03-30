@@ -184,18 +184,29 @@ export type GroupFeature = (typeof GROUP_FEATURES)[number];
 export type ProjectFeature = (typeof PROJECT_FEATURES)[number];
 
 export const GROUP_FEATURE_NAMES: Partial<Record<GroupFeature, string>> = {
+  // Plan
   boards: "Issue Boards",
   roadmap: "Epics Roadmap",
   cadences: "Iteration cadences",
   wikis: "Wiki",
   "crm/contacts": "Customer relations contacts",
   "crm/organizations": "Customer relations organizations",
+
+  // Secure
   "security/dashboard": "Security Dashboard",
   "security/vulnerabilities": "Vulnerability Report",
+
+  // Deploy
   packages: "Package Registry",
   container_registries: "Container Registry",
+
+  // Operate
   infrastructure_registry: "Terraform Module Registry",
+
+  // Analyze
   issues_analytics: "Issue Analytics",
+
+  // Settings
   edit: "General settings",
   "settings/integrations": "Group-level integration management",
   hooks: "Group Hooks",
@@ -209,33 +220,52 @@ export const GROUP_FEATURE_NAMES: Partial<Record<GroupFeature, string>> = {
 };
 
 export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
+  // Manage
   project_members: "Members",
+
+  // Plan
   boards: "Issue Boards",
   cadences: "Iteration cadences",
   wikis: "Wiki",
   "requirements_management/requirements": "Requirements",
+
+  // Code
   tree: "Repository",
   branches: "Repository / Branches",
   network: "Graph",
   compare: "Compare revisions",
+
+  // Build
   "ci/editor": "Pipeline Editor",
   pipeline_schedules: "Schedules",
   "quality/test_cases": "Test cases",
+
+  // Secure
   "security/discover": "Security capabilities",
   "security/configuration": "Security configuration",
+
+  // Deploy
   packages: "Package Registry",
   "analytics/code_reviews": "Code Review",
   "analytics/issues_analytics": "Issue Analytics",
   "ml/models": "Model registry",
+
+  // Operate
   clusters: "Kubernetes",
   terraform: "Terraform states",
   infrastructure_registry: "Terraform Module Registry",
+
+  // Monitor
   error_tracking: "Errors",
   alert_management: "Alerts",
   "issues/service_desk": "Service Desk",
+
+  // Analyze
   graphs: "Contributor analytics",
   "pipelines/charts": "CI/CD Analytics",
   "ml/experiments": "Model experiments",
+
+  // Settings
   "settings/integrations": "Integration Settings",
   hooks: "Webhook Settings",
   "settings/access_tokens": "Access Tokens",
