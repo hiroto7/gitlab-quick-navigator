@@ -330,51 +330,57 @@ export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
   usage_quotas: "Usage",
 };
 
+const isEnabledOrPrivate =
+  (
+    feature: Extract<
+      keyof Project,
+      `${string}_access_level`
+    > extends `${infer T}_access_level`
+      ? T
+      : never,
+  ) =>
+  (project: Project) =>
+    project[`${feature}_access_level`] !== "disabled";
+
 export const isProjectFeatureAvailable: Partial<
   Record<ProjectFeature, (project: Project) => boolean>
 > = {
-  issues: (project) => project.issues_access_level !== "disabled",
-  boards: (project) => project.issues_access_level !== "disabled",
-  incidents: (project) => project.issues_access_level !== "disabled",
-  "issues/service_desk": (project) =>
-    project.issues_access_level !== "disabled",
+  issues: isEnabledOrPrivate("issues"),
+  boards: isEnabledOrPrivate("issues"),
+  incidents: isEnabledOrPrivate("issues"),
+  "issues/service_desk": isEnabledOrPrivate("issues"),
 
-  merge_requests: (project) =>
-    project.merge_requests_access_level !== "disabled",
-  snippets: (project) => project.snippets_access_level !== "disabled",
-  wikis: (project) => project.wiki_access_level !== "disabled",
+  merge_requests: isEnabledOrPrivate("merge_requests"),
+  snippets: isEnabledOrPrivate("snippets"),
+  wikis: isEnabledOrPrivate("wiki"),
 
-  value_stream_analytics: (project) =>
-    project.analytics_access_level !== "disabled",
+  value_stream_analytics: isEnabledOrPrivate("analytics"),
 
-  pipelines: (project) => project.builds_access_level !== "disabled",
-  jobs: (project) => project.builds_access_level !== "disabled",
-  pipeline_schedules: (project) => project.builds_access_level !== "disabled",
-  artifacts: (project) => project.builds_access_level !== "disabled",
-  "settings/ci_cd": (project) => project.builds_access_level !== "disabled",
+  pipelines: isEnabledOrPrivate("builds"),
+  jobs: isEnabledOrPrivate("builds"),
+  pipeline_schedules: isEnabledOrPrivate("builds"),
+  artifacts: isEnabledOrPrivate("builds"),
+  "settings/ci_cd": isEnabledOrPrivate("builds"),
 
-  clusters: (project) => project.infrastructure_access_level !== "disabled",
-  terraform: (project) => project.infrastructure_access_level !== "disabled",
-  "google_cloud/configuration": (project) =>
-    project.infrastructure_access_level !== "disabled",
+  clusters: isEnabledOrPrivate("infrastructure"),
+  terraform: isEnabledOrPrivate("infrastructure"),
+  "google_cloud/configuration": isEnabledOrPrivate("infrastructure"),
 
-  "ml/experiments": (project) =>
-    project.model_experiments_access_level !== "disabled",
-  "ml/models": (project) =>
-    project.model_experiments_access_level !== "disabled",
+  "ml/experiments": isEnabledOrPrivate("model_experiments"),
+  "ml/models": isEnabledOrPrivate("model_experiments"),
 
-  error_tracking: (project) => project.monitor_access_level !== "disabled",
-  alert_management: (project) => project.monitor_access_level !== "disabled",
+  error_tracking: isEnabledOrPrivate("monitor"),
+  alert_management: isEnabledOrPrivate("monitor"),
 
-  releases: (project) => project.releases_access_level !== "disabled",
+  releases: isEnabledOrPrivate("releases"),
 
-  tree: (project) => project.repository_access_level !== "disabled",
-  branches: (project) => project.repository_access_level !== "disabled",
-  commits: (project) => project.repository_access_level !== "disabled",
-  tags: (project) => project.repository_access_level !== "disabled",
-  network: (project) => project.repository_access_level !== "disabled",
-  compare: (project) => project.repository_access_level !== "disabled",
-  "ci/editor": (project) => project.repository_access_level !== "disabled",
+  tree: isEnabledOrPrivate("repository"),
+  branches: isEnabledOrPrivate("repository"),
+  commits: isEnabledOrPrivate("repository"),
+  tags: isEnabledOrPrivate("repository"),
+  network: isEnabledOrPrivate("repository"),
+  compare: isEnabledOrPrivate("repository"),
+  "ci/editor": isEnabledOrPrivate("repository"),
 
   labels: (project) =>
     project.issues_access_level !== "disabled" ||
