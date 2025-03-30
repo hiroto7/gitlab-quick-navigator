@@ -237,7 +237,10 @@ const GroupProjectList: React.FC<{
             base: group.web_url,
             name: group.name,
             avatar: group.avatar_url,
-            featurePath: groupFeature,
+            featurePath:
+              groupFeature !== undefined && feature === `${groupFeature}/new`
+                ? feature
+                : groupFeature,
             featureName:
               groupFeature !== undefined
                 ? getFeatureName(groupFeature, GROUP_FEATURE_NAMES)
@@ -282,10 +285,13 @@ const GroupProjectList: React.FC<{
             name: project.name,
             avatar: project.avatar_url,
             featurePath:
-              projectFeature !== undefined &&
-              ["tree", "network", "graphs"].includes(projectFeature)
-                ? `${projectFeature}/${project.default_branch}`
-                : projectFeature,
+              projectFeature !== undefined
+                ? ["tree", "network", "graphs"].includes(projectFeature)
+                  ? `${projectFeature}/${project.default_branch}`
+                  : feature === `${projectFeature}/new`
+                    ? feature
+                    : projectFeature
+                : undefined,
             featureName:
               projectFeature === "issues" && project.open_issues_count > 0
                 ? `Issues (${project.open_issues_count.toLocaleString()})`
