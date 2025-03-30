@@ -53,6 +53,8 @@ export const GROUP_FEATURES = [
   "group_members",
   "labels",
 
+  "labels/new",
+
   // Plan
   "issues",
   "epics",
@@ -65,11 +67,15 @@ export const GROUP_FEATURES = [
   "crm/contacts",
   "crm/organizations",
 
+  "milestones/new",
+
   // Code
   "merge_requests",
 
   // Build
   "runners",
+
+  "runners/new",
 
   // Secure
   "security/dashboard",
@@ -81,7 +87,7 @@ export const GROUP_FEATURES = [
 
   // Operate
   "dependency_proxy",
-  "infrastructure_registry",
+  "terraform_module_registry",
 
   // Analyze
   "insights",
@@ -105,9 +111,13 @@ export const PROJECT_FEATURES = [
   "starrers",
   "forks",
 
+  "forks/new",
+
   // Manage
   "project_members",
   "labels",
+
+  "labels/new",
 
   // Plan
   "issues",
@@ -116,6 +126,9 @@ export const PROJECT_FEATURES = [
   "cadences",
   "wikis",
   "requirements_management/requirements",
+
+  "issues/new",
+  "milestones/new",
 
   // Code
   "merge_requests",
@@ -127,6 +140,11 @@ export const PROJECT_FEATURES = [
   "compare",
   "snippets",
 
+  "merge_requests/new",
+  "branches/new",
+  "tags/new",
+  "snippets/new",
+
   // Build
   "pipelines",
   "jobs",
@@ -134,6 +152,9 @@ export const PROJECT_FEATURES = [
   "pipeline_schedules",
   "quality/test_cases",
   "artifacts",
+
+  "pipelines/new",
+  "pipeline_schedules/new",
 
   // Secure
   "security/discover",
@@ -146,12 +167,18 @@ export const PROJECT_FEATURES = [
   "packages",
   "ml/models",
 
+  "releases/new",
+  "feature_flags/new",
+  "ml/models/new",
+
   // Operate
   "environments",
   "clusters",
   "terraform",
-  "infrastructure_registry",
+  "terraform_module_registry",
   "google_cloud/configuration",
+
+  "environments/new",
 
   // Monitor
   "error_tracking",
@@ -184,6 +211,9 @@ export type GroupFeature = (typeof GROUP_FEATURES)[number];
 export type ProjectFeature = (typeof PROJECT_FEATURES)[number];
 
 export const GROUP_FEATURE_NAMES: Partial<Record<GroupFeature, string>> = {
+  // Manage
+  "labels/new": "Labels / New label",
+
   // Plan
   boards: "Issue Boards",
   roadmap: "Epics Roadmap",
@@ -192,6 +222,8 @@ export const GROUP_FEATURE_NAMES: Partial<Record<GroupFeature, string>> = {
   "crm/contacts": "Customer relations contacts",
   "crm/organizations": "Customer relations organizations",
 
+  "milestones/new": "Milestones / New milestone",
+
   // Secure
   "security/dashboard": "Security Dashboard",
   "security/vulnerabilities": "Vulnerability Report",
@@ -199,9 +231,6 @@ export const GROUP_FEATURE_NAMES: Partial<Record<GroupFeature, string>> = {
   // Deploy
   packages: "Package Registry",
   container_registries: "Container Registry",
-
-  // Operate
-  infrastructure_registry: "Terraform Module Registry",
 
   // Analyze
   issues_analytics: "Issue Analytics",
@@ -220,8 +249,12 @@ export const GROUP_FEATURE_NAMES: Partial<Record<GroupFeature, string>> = {
 };
 
 export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
+  "forks/new": "Fork project",
+
   // Manage
   project_members: "Members",
+
+  "labels/new": "Labels / New label",
 
   // Plan
   boards: "Issue Boards",
@@ -229,16 +262,26 @@ export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
   wikis: "Wiki",
   "requirements_management/requirements": "Requirements",
 
+  "milestones/new": "Milestones / New milestone",
+
   // Code
   tree: "Repository",
   branches: "Repository / Branches",
   network: "Graph",
   compare: "Compare revisions",
 
+  "merge_requests/new": "Merge requests / New merge request",
+  "branches/new": "Branches / New branch",
+  "tags/new": "Tags / New tag",
+  "snippets/new": "Snippets / New snippet",
+
   // Build
   "ci/editor": "Pipeline Editor",
   pipeline_schedules: "Schedules",
   "quality/test_cases": "Test cases",
+
+  "pipelines/new": "Pipelines / New pipeline",
+  "pipeline_schedules/new": "Pipelines / Schedules",
 
   // Secure
   "security/discover": "Security capabilities",
@@ -250,10 +293,14 @@ export const PROJECT_FEATURE_NAMES: Partial<Record<ProjectFeature, string>> = {
   "analytics/issues_analytics": "Issue Analytics",
   "ml/models": "Model registry",
 
+  "releases/new": "Releases / New release",
+  "ml/models/new": "New model",
+
   // Operate
   clusters: "Kubernetes",
   terraform: "Terraform states",
-  infrastructure_registry: "Terraform Module Registry",
+
+  "environments/new": "Environments / New environment",
 
   // Monitor
   error_tracking: "Errors",
@@ -352,7 +399,7 @@ const capitalize = <T extends string>(text: T) =>
   (text.slice(0, 1).toUpperCase() + text.slice(1)) as Capitalize<T>;
 
 const getDefaultFeatureName = (path: string) =>
-  path.replace("_", " ").split("/").map(capitalize).join(" / ");
+  path.replaceAll("_", " ").split("/").map(capitalize).join(" / ");
 
 export const getFeatureName = <P extends string>(
   path: P,
