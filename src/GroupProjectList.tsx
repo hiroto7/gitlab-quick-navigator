@@ -7,28 +7,19 @@ import {
   Skeleton,
 } from "@heroui/react";
 import React, { useCallback } from "react";
+import { useDrag } from "./hooks";
 import { StarIcon, StarredIcon } from "./icons";
 import {
-  GROUP_FEATURES,
   GROUP_FEATURE_NAMES,
   Group,
   GroupFeature,
-  PROJECT_FEATURES,
   PROJECT_FEATURE_NAMES,
   Project,
   ProjectFeature,
+  findGroupFeature,
+  findProjectFeature,
   getFeatureName,
-  isProjectFeatureAvailable,
 } from "./lib";
-import { useDrag } from "./hooks";
-
-const SIMILAR_FEATURE_PAIRS: readonly {
-  group: GroupFeature;
-  project: ProjectFeature;
-}[] = [
-  { group: "group_members", project: "project_members" },
-  { group: "issues_analytics", project: "analytics/issues_analytics" },
-];
 
 const GroupProjectList: React.FC<{
   path: string | undefined;
@@ -149,14 +140,7 @@ const GroupProjectList: React.FC<{
   );
 
   const groupFeature: GroupFeature | undefined =
-    feature !== undefined
-      ? (SIMILAR_FEATURE_PAIRS.find(({ project }) =>
-          feature.startsWith(project),
-        )?.group ??
-        GROUP_FEATURES.findLast((groupFeature) =>
-          feature.startsWith(groupFeature),
-        ))
-      : undefined;
+    feature !== undefined ? findGroupFeature(feature) : undefined;
 
   const allKeys = [
     ...[...starredGroups, ...(typeof group === "object" ? [group] : [])].map(
@@ -289,15 +273,7 @@ const GroupProjectList: React.FC<{
 
           const projectFeature: ProjectFeature | undefined =
             feature !== undefined
-              ? (SIMILAR_FEATURE_PAIRS.find(({ group }) =>
-                  feature.startsWith(group),
-                )?.project ??
-                PROJECT_FEATURES.findLast(
-                  (projectFeature) =>
-                    feature.startsWith(projectFeature) &&
-                    (isProjectFeatureAvailable[projectFeature]?.(project) ??
-                      true),
-                ))
+              ? findProjectFeature(feature, project)
               : undefined;
 
           return getListboxItem({

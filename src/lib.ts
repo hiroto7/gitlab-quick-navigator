@@ -349,3 +349,25 @@ export const parsePathname = (pathname: string) => {
   const { path, feature } = array?.groups ?? {};
   return { path, feature };
 };
+
+const SIMILAR_FEATURE_PAIRS: readonly {
+  group: GroupFeature;
+  project: ProjectFeature;
+}[] = [
+  { group: "group_members", project: "project_members" },
+  { group: "issues_analytics", project: "analytics/issues_analytics" },
+];
+
+export const findGroupFeature = (feature: string) =>
+  SIMILAR_FEATURE_PAIRS.find(({ project }) => feature.startsWith(project))
+    ?.group ??
+  GROUP_FEATURES.findLast((groupFeature) => feature.startsWith(groupFeature));
+
+export const findProjectFeature = (feature: string, project: Project) =>
+  SIMILAR_FEATURE_PAIRS.find(({ group }) => feature.startsWith(group))
+    ?.project ??
+  PROJECT_FEATURES.findLast(
+    (projectFeature) =>
+      feature.startsWith(projectFeature) &&
+      (isProjectFeatureAvailable[projectFeature]?.(project) ?? true),
+  );
