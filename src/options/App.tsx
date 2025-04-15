@@ -16,6 +16,8 @@ const App: React.FC = () => {
       topContent="GitLab Quick Navigatorを有効化したサイト"
     >
       {Object.entries(options).map(([origin, siteOptions]) => {
+        const host = new URL(origin).host;
+
         return (
           <ListboxItem
             showDivider
@@ -33,7 +35,7 @@ const App: React.FC = () => {
                   if (
                     siteOptions.token === undefined ||
                     confirm(
-                      `${origin} でGitLab Quick Navigatorを無効化すると、設定したアクセストークンも削除されます。`,
+                      `${host} でGitLab Quick Navigatorを無効化してもよろしいですか？無効化すると設定済みのアクセストークンが削除されます。`,
                     )
                   )
                     void set({
