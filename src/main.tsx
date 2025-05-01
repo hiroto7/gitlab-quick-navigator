@@ -12,7 +12,7 @@ import { SWRConfig } from "swr";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HeroUIProvider>
-      <ThemeProvider>
+      <ThemeProvider attribute="class">
         <CacheProvider>
           <SWRConfig value={{ shouldRetryOnError: false }}>
             <App />
