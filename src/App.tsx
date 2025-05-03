@@ -1,7 +1,7 @@
 import { Button, Link, Progress } from "@heroui/react";
 import React from "react";
 import "./App.css";
-import CustomAlert, { CustomAlertFooter } from "./CustomAlert";
+import CustomAlert from "./CustomAlert";
 import GroupProjectList from "./GroupProjectList";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
 import { Group, parsePathname, Project } from "./lib";
@@ -19,13 +19,16 @@ const Alert1: React.FC<{ host: string; onEnable: () => void }> = ({
   <CustomAlert
     color="primary"
     title="このサイトでGitLab Quick Navigatorを有効にしますか？"
-    description={`${host} でポップアップを開くたび、 /api/v4 以下のエンドポイントからGroupやProjectの一覧を取得するようになります。GitLab以外のサイトでは有効にしないでください。`}
+    description={
+      <>
+        有効にすると、今後 <span className="break-all">{host}/api/v4</span>{" "}
+        以下からグループやプロジェクトの一覧を取得するようになります。GitLab以外のサイトでは有効にしないでください。
+      </>
+    }
     endContent={
-      <CustomAlertFooter>
-        <Button size="sm" color="primary" onPress={onEnable}>
-          有効にする
-        </Button>
-      </CustomAlertFooter>
+      <Button size="sm" color="primary" onPress={onEnable}>
+        有効にする
+      </Button>
     }
   />
 );
@@ -33,8 +36,7 @@ const Alert1: React.FC<{ host: string; onEnable: () => void }> = ({
 const Alert2: React.FC = () => (
   <CustomAlert
     color="warning"
-    title="このページのURLからGroupやProjectを特定できません"
-    description="GroupまたはProjectのページでポップアップを開くと、そのページのGroupやProjectの一覧を表示します。"
+    title="このページのURLからグループやプロジェクトを特定できません"
   />
 );
 
@@ -45,10 +47,10 @@ const Alert3: React.FC<{
 }> = ({ origin, onSetToken, onDeleteToken }) => (
   <CustomAlert
     color="warning"
-    title="このページでGroupやProjectの一覧を取得できません"
-    description="このページのURLに対応していないか、権限がありません。プライベートなGroupやProjectを表示するには、アクセストークンを設定してください。"
+    title="このページでグループやプロジェクトの一覧を取得できません"
+    description="このページのURLに対応していないか権限がありません。プライベートな項目を表示するには、アクセストークンを設定してください。"
     endContent={
-      <CustomAlertFooter>
+      <>
         <Button
           as={Link}
           size="sm"
@@ -58,7 +60,7 @@ const Alert3: React.FC<{
           isExternal
           href={`${origin}/-/user_settings/personal_access_tokens?name=GitLab+Quick+Navigator&scopes=read_api`}
         >
-          トークンを発行
+          GitLabでトークンを発行
         </Button>
         <Button
           size="sm"
@@ -75,9 +77,13 @@ const Alert3: React.FC<{
         >
           トークンを設定
         </Button>
-      </CustomAlertFooter>
+      </>
     }
   />
+);
+
+const Alert4: React.FC = () => (
+  <CustomAlert color="primary" title="現在のURLのパラメーターを引き継ぎます" />
 );
 
 const Main: React.FC<{
@@ -168,6 +174,10 @@ const Main: React.FC<{
             onSetToken={onSetToken}
             onDeleteToken={onDeleteToken}
           />
+        </div>
+      ) : url.search !== "" ? (
+        <div className="m-2">
+          <Alert4 />
         </div>
       ) : (
         <></>
