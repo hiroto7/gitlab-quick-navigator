@@ -19,7 +19,7 @@
     "swr": "^2.3.3"
   },
   "devDependencies": {
-    "@crxjs/vite-plugin": "2.0.0-beta.32",
+    "@crxjs/vite-plugin": "2.0.0-beta.33",
     "@eslint/js": "^9.26.0",
     "@tsconfig/strictest": "^2.0.5",
     "@types/chrome": "^0.0.319",
