@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
-import { move } from "./lib";
+import { Group, move, Project } from "./lib";
 
 export const useCurrentUrl = () => {
   const [href, setHref] = useState<string>();
@@ -95,60 +95,57 @@ const fetcher = async <T>(
   return json as T;
 };
 
-const getParent = (path: string) =>
+export const getParent = (path: string) =>
   path.includes("/") ? path.split("/").slice(0, -1).join("/") : undefined;
 
-export const useClosestGroup = <T>(
+const useGitLab = <T>(
   getEndpoint: (path: string) => string,
   origin: string | undefined,
   path: string | undefined,
   token: string | undefined,
-  onSuccess: (data: T) => void,
-) => {
-  const {
-    data,
-    error,
-    isValidating: isBaseValidating,
-    isLoading: isBaseLoading,
-  } = useSWR<T, unknown, [string, string, string | undefined] | false>(
+) =>
+  useSWR<T, unknown, [string, string, string | undefined] | false>(
     origin !== undefined &&
       path !== undefined && [origin, getEndpoint(path), token],
     ([origin, path, token]) => fetcher<T>(origin, path, token),
-    { onSuccess },
   );
 
-  const parent = path !== undefined ? getParent(path) : undefined;
-  const {
-    data: parentData,
-    error: parentError,
-    isValidating: isParentValidating,
-    isLoading: isParentLoading,
-  } = useSWR<T, unknown, [string, string, string | undefined] | false>(
-    error !== undefined &&
-      origin !== undefined &&
-      parent !== undefined && [origin, getEndpoint(parent), token],
-    ([origin, path, token]) => fetcher<T>(origin, path, token),
-    { onSuccess },
+export const useGroup = (
+  origin: string | undefined,
+  groupPath: string | undefined,
+  token: string | undefined,
+) =>
+  useGitLab<Group>(
+    (path) => `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`,
+    origin,
+    groupPath,
+    token,
   );
 
-  const isValidating = isBaseValidating || isParentValidating;
-  const isLoading =
-    (isBaseLoading && parentData === undefined) ||
-    (isParentLoading && data === undefined);
+export const useGroupProjects = (
+  origin: string | undefined,
+  groupPath: string | undefined,
+  token: string | undefined,
+) =>
+  useGitLab<readonly Project[]>(
+    (path) =>
+      `/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`,
+    origin,
+    groupPath,
+    token,
+  );
 
-  if (error === undefined || parent === undefined)
-    return { data, error, isValidating, isLoading };
-  else
-    return {
-      data: parentData,
-      error:
-        parentError === undefined
-          ? undefined
-          : new AggregateError([error, parentError]),
-      isValidating,
-      isLoading,
-    };
-};
+export const useProject = (
+  origin: string | undefined,
+  projectPath: string | undefined,
+  token: string | undefined,
+) =>
+  useGitLab<Project>(
+    (path) => `/api/v4/projects/${encodeURIComponent(path)}`,
+    origin,
+    projectPath,
+    token,
+  );
 
 export const useDrag = <T>(currentList: readonly T[]) => {
   const [draggedItem, setDraggedItem] = useState<T>();

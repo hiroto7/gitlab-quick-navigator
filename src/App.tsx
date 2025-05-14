@@ -3,14 +3,15 @@ import React from "react";
 import "./App.css";
 import CustomAlert from "./CustomAlert";
 import GroupProjectList from "./GroupProjectList";
-import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
+import {
+  getParent,
+  useChromeStorage,
+  useCurrentUrl,
+  useGroup,
+  useGroupProjects,
+  useProject,
+} from "./hooks";
 import { Group, parsePathname, Project } from "./lib";
-
-const groupDetailEndpoint = (path: string) =>
-  `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
-
-const groupProjectsEndpoint = (path: string) =>
-  `/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`;
 
 const Alert1: React.FC<{ host: string; onEnable: () => void }> = ({
   host,
@@ -108,44 +109,42 @@ const Main: React.FC<{
   onStarredProjectsUpdate,
 }) => {
   const { path, feature } = parsePathname(url.pathname);
+  const parent = path !== undefined ? getParent(path) : undefined;
 
   const {
     data: group,
     error: groupError,
     isValidating: isGroupValidating,
     isLoading: isGroupLoading,
-  } = useClosestGroup<Group>(
-    groupDetailEndpoint,
-    options && url.origin,
-    path,
-    options?.token,
-    (loadedGroup) =>
-      onStarredGroupsUpdate(
-        starredGroups.map((starredGroup) =>
-          starredGroup.id === loadedGroup.id ? loadedGroup : starredGroup,
-        ),
-      ),
-  );
+  } = useGroup(options && url.origin, path, options?.token);
+
   const {
-    data: projects,
-    error: projectsError,
-    isValidating: isProjectsValidating,
-    isLoading: isProjectsLoading,
-  } = useClosestGroup<readonly Project[]>(
-    groupProjectsEndpoint,
-    options && url.origin,
-    path,
-    options?.token,
-    (loadedProjects) =>
-      onStarredProjectsUpdate(
-        starredProjects.map(
-          (starredProject) =>
-            loadedProjects.find(
-              (loadedProject) => starredProject.id === loadedProject.id,
-            ) ?? starredProject,
-        ),
-      ),
-  );
+    data: parentGroup,
+    error: parentGroupError,
+    isValidating: isParentGroupValidating,
+    isLoading: isParentGroupLoading,
+  } = useGroup(options && url.origin, parent, options?.token);
+
+  const {
+    data: groupProjects,
+    error: groupProjectsError,
+    isValidating: isGroupProjectsValidating,
+    isLoading: isGroupProjectsLoading,
+  } = useGroupProjects(options && url.origin, path, options?.token);
+
+  const {
+    data: parentGroupProjects,
+    error: parentGroupProjectsError,
+    isValidating: isParentGroupProjectsValidating,
+    isLoading: isParentGroupProjectsLoading,
+  } = useGroupProjects(options && url.origin, parent, options?.token);
+
+  const {
+    data: project,
+    error: projectError,
+    isValidating: isProjectValidating,
+    isLoading: isProjectLoading,
+  } = useProject(options && url.origin, path, options?.token);
 
   return (
     <>
@@ -155,7 +154,13 @@ const Main: React.FC<{
         radius="none"
         isIndeterminate
         className={
-          !isGroupValidating && !isProjectsValidating ? "invisible" : undefined
+          !isGroupValidating &&
+          !isParentGroupLoading &&
+          !isGroupProjectsLoading &&
+          !isParentGroupProjectsLoading &&
+          !isProjectLoading
+            ? "invisible"
+            : undefined
         }
         aria-label="Loading..."
       />
@@ -167,7 +172,8 @@ const Main: React.FC<{
         <div className="m-2">
           <Alert2 />
         </div>
-      ) : groupError || projectsError ? (
+      ) : (groupError && parentGroupError) ||
+        (groupProjectsError && parentGroupProjectsError) ? (
         <div className="m-2">
           <Alert3
             origin={url.origin}
@@ -186,7 +192,11 @@ const Main: React.FC<{
         starredGroups={starredGroups}
         starredProjects={starredProjects}
         currentGroup={!isGroupLoading ? group : "loading"}
-        currentGroupProjects={!isProjectsLoading ? projects : "loading"}
+        currentParentGroup={!isParentGroupLoading ? parentGroup : "loading"}
+        currentGroupProjects={
+          !isGroupProjectsLoading ? groupProjects : "loading"
+        }
+        currentProject={!isProjectLoading ? project : "loading"}
         path={path}
         feature={feature}
         search={url.search}

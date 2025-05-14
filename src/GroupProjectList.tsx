@@ -28,7 +28,9 @@ const GroupProjectList: React.FC<{
   starredGroups: readonly Group[];
   starredProjects: readonly Project[];
   currentGroup: Group | "loading" | undefined;
+  currentParentGroup: Group | "loading" | undefined;
   currentGroupProjects: readonly Project[] | "loading" | undefined;
+  currentProject: Project | "loading" | undefined;
   onStarredGroupsUpdate: (groups: readonly Group[]) => void;
   onStarredProjectsUpdate: (projects: readonly Project[]) => void;
 }> = ({
@@ -37,8 +39,10 @@ const GroupProjectList: React.FC<{
   search,
   starredGroups: currentStarredGroups,
   starredProjects: currentStarredProjects,
-  currentGroup: group,
-  currentGroupProjects: projects,
+  currentGroup,
+  currentParentGroup,
+  currentGroupProjects,
+  currentProject,
   onStarredGroupsUpdate,
   onStarredProjectsUpdate,
 }) => {
@@ -143,12 +147,13 @@ const GroupProjectList: React.FC<{
     feature !== undefined ? findGroupFeature(feature) : undefined;
 
   const allKeys = [
-    ...[...starredGroups, ...(typeof group === "object" ? [group] : [])].map(
-      (group) => group.full_path,
-    ),
+    ...[
+      ...starredGroups,
+      ...(typeof currentGroup === "object" ? [currentGroup] : []),
+    ].map((group) => group.full_path),
     ...[
       ...starredProjects,
-      ...(typeof projects === "object" ? projects : []),
+      ...(typeof currentGroupProjects === "object" ? currentGroupProjects : []),
     ].map((project) => project.path_with_namespace),
   ];
 
@@ -160,12 +165,14 @@ const GroupProjectList: React.FC<{
         onGroupDragEnter(index);
       },
     })),
-    ...(typeof group === "object"
-      ? starredGroups.find((starredGroup) => starredGroup.id === group.id)
+    ...(typeof currentGroup === "object"
+      ? starredGroups.find(
+          (starredGroup) => starredGroup.id === currentGroup.id,
+        )
         ? []
-        : [{ group, starred: false, onDragEnter: undefined }]
-      : group === "loading"
-        ? [group]
+        : [{ group: currentGroup, starred: false, onDragEnter: undefined }]
+      : currentGroup === "loading"
+        ? [currentGroup]
         : []),
   ];
 
@@ -177,8 +184,8 @@ const GroupProjectList: React.FC<{
         onProjectDragEnter(index);
       },
     })),
-    ...(typeof projects === "object"
-      ? projects
+    ...(typeof currentGroupProjects === "object"
+      ? currentGroupProjects
           .filter(
             (project) =>
               starredProjects.find(
@@ -190,8 +197,8 @@ const GroupProjectList: React.FC<{
             starred: false,
             onDragEnter: undefined,
           }))
-      : projects === "loading"
-        ? [projects]
+      : currentGroupProjects === "loading"
+        ? [currentGroupProjects]
         : []),
   ];
 
