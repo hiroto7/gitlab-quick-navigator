@@ -6,7 +6,8 @@ import {
   ListboxSection,
   Skeleton,
 } from "@heroui/react";
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
+import { Spinner } from "@heroui/react";
 import { useDrag } from "./hooks";
 import { StarIcon, StarredIcon } from "./icons";
 import {
@@ -57,6 +58,8 @@ const GroupProjectList: React.FC<{
     onDragEnd: onProjectDragEnd,
   } = useDrag(currentStarredProjects);
 
+  const [pressedKey, setPressedKey] = useState<string>();
+
   const getListboxItem = useCallback(
     ({
       key,
@@ -92,7 +95,10 @@ const GroupProjectList: React.FC<{
         <ListboxItem
           key={key}
           href={href}
-          onPress={() => void chrome.tabs.update({ url: href })}
+          onPress={() => {
+            setPressedKey(key);
+            void chrome.tabs.update({ url: href });
+          }}
           description={featureName}
           startContent={
             <Avatar
@@ -105,19 +111,27 @@ const GroupProjectList: React.FC<{
             />
           }
           data-starred={starred}
+          data-loading={pressedKey === key && pressedKey !== path}
           endContent={
-            <Button
-              isIconOnly
-              variant="light"
-              size="sm"
-              color={starred ? "success" : undefined}
-              className="hidden group-data-[hover=true]:inline-flex group-data-[selected=true]:inline-flex group-data-[starred=true]:inline-flex"
-              onPress={() => {
-                onStar(!starred);
-              }}
-            >
-              {starred ? <StarredIcon /> : <StarIcon />}
-            </Button>
+            <>
+              <Spinner
+                size="sm"
+                variant="gradient"
+                className="group-data-[loading=false]:hidden"
+              />
+              <Button
+                isIconOnly
+                variant="light"
+                size="sm"
+                color={starred ? "success" : undefined}
+                className="hidden group-data-[hover=true]:inline-flex group-data-[loading=true]:inline-flex group-data-[selected=true]:inline-flex group-data-[starred=true]:inline-flex"
+                onPress={() => {
+                  onStar(!starred);
+                }}
+              >
+                {starred ? <StarredIcon /> : <StarIcon />}
+              </Button>
+            </>
           }
           draggable={starred}
           onDragOver={(event) => {
@@ -136,7 +150,7 @@ const GroupProjectList: React.FC<{
         </ListboxItem>
       );
     },
-    [search],
+    [search, pressedKey, path],
   );
 
   const groupFeature: GroupFeature | undefined =
