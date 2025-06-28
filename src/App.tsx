@@ -5,6 +5,7 @@ import CustomAlert from "./CustomAlert";
 import GroupProjectList from "./GroupProjectList";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
 import { Group, parsePathname, Project } from "./lib";
+import FeatureList from "./FeatureList";
 
 const groupDetailEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
@@ -182,17 +183,24 @@ const Main: React.FC<{
       ) : (
         <></>
       )}
-      <GroupProjectList
-        starredGroups={starredGroups}
-        starredProjects={starredProjects}
-        currentGroup={!isGroupLoading ? group : "loading"}
-        currentGroupProjects={!isProjectsLoading ? projects : "loading"}
-        path={path}
-        feature={feature}
-        search={url.search}
-        onStarredGroupsUpdate={onStarredGroupsUpdate}
-        onStarredProjectsUpdate={onStarredProjectsUpdate}
-      />
+      <div className="flex">
+        <div className="w-xs">
+          <GroupProjectList
+            starredGroups={starredGroups}
+            starredProjects={starredProjects}
+            currentGroup={!isGroupLoading ? group : "loading"}
+            currentGroupProjects={!isProjectsLoading ? projects : "loading"}
+            path={path}
+            feature={feature}
+            search={url.search}
+            onStarredGroupsUpdate={onStarredGroupsUpdate}
+            onStarredProjectsUpdate={onStarredProjectsUpdate}
+          />
+        </div>
+        <div>
+          <FeatureList />
+        </div>
+      </div>
     </>
   );
 };
