@@ -206,9 +206,10 @@ const Main: React.FC<{
       <div>
         <Tabs
           fullWidth
-          classNames={{ base: "p-2 sticky" }}
+          classNames={{ base: "p-2" }}
           selectedKey={tab}
           onSelectionChange={(key) => setTab(key.toString())}
+          disabledKeys={project === undefined ? ["features"] : []}
         >
           <Tab
             title={
@@ -244,7 +245,6 @@ const Main: React.FC<{
               </div>
             }
             key="features"
-            disabled={project === undefined}
           >
             {project !== undefined && (
               <FeatureList
