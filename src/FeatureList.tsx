@@ -1,11 +1,12 @@
-import { Listbox, ListboxSection, ListboxItem } from "@heroui/react";
-import { GroupFeature, ProjectFeature } from "./lib";
+import { Listbox, ListboxItem, ListboxSection, Spinner } from "@heroui/react";
+import React from "react";
+import { generateHref, GroupFeature, ProjectFeature } from "./lib";
 
 interface ProjectFeatureListSection<F extends GroupFeature | ProjectFeature> {
   title: string;
   items: readonly {
     label: string;
-    value: F;
+    feature: F;
   }[];
 }
 
@@ -14,123 +15,150 @@ const PROJECT_FEATURE_LIST: readonly ProjectFeatureListSection<ProjectFeature>[]
     {
       title: "Manage",
       items: [
-        { label: "Members", value: "project_members" },
-        { label: "Labels", value: "labels" },
+        { label: "Members", feature: "project_members" },
+        { label: "Labels", feature: "labels" },
       ],
     },
     {
       title: "Plan",
       items: [
-        { label: "Issues", value: "issues" },
-        { label: "Issue boards", value: "boards" },
-        { label: "Milestones", value: "milestones" },
-        { label: "Iterations", value: "cadences" },
-        { label: "Wiki", value: "wikis" },
+        { label: "Issues", feature: "issues" },
+        { label: "Issue boards", feature: "boards" },
+        { label: "Milestones", feature: "milestones" },
+        { label: "Iterations", feature: "cadences" },
+        { label: "Wiki", feature: "wikis" },
         {
           label: "Requirements",
-          value: "requirements_management/requirements",
+          feature: "requirements_management/requirements",
         },
       ],
     },
     {
       title: "Code",
       items: [
-        { label: "Merge requests", value: "merge_requests" },
-        { label: "Repository", value: "tree" },
-        { label: "Branches", value: "branches" },
-        { label: "Commits", value: "commits" },
-        { label: "Tags", value: "tags" },
-        { label: "Repository graph", value: "network" },
-        { label: "Compare revisions", value: "compare" },
-        { label: "Snippets", value: "snippets" },
+        { label: "Merge requests", feature: "merge_requests" },
+        { label: "Repository", feature: "tree" },
+        { label: "Branches", feature: "branches" },
+        { label: "Commits", feature: "commits" },
+        { label: "Tags", feature: "tags" },
+        { label: "Repository graph", feature: "network" },
+        { label: "Compare revisions", feature: "compare" },
+        { label: "Snippets", feature: "snippets" },
       ],
     },
     {
       title: "Build",
       items: [
-        { label: "Pipelines", value: "pipelines" },
-        { label: "Jobs", value: "jobs" },
-        { label: "Pipeline editor", value: "ci/editor" },
-        { label: "Pipeline schedules", value: "pipeline_schedules" },
-        { label: "Test cases", value: "quality/test_cases" },
-        { label: "Artifacts", value: "artifacts" },
+        { label: "Pipelines", feature: "pipelines" },
+        { label: "Jobs", feature: "jobs" },
+        { label: "Pipeline editor", feature: "ci/editor" },
+        { label: "Pipeline schedules", feature: "pipeline_schedules" },
+        { label: "Test cases", feature: "quality/test_cases" },
+        { label: "Artifacts", feature: "artifacts" },
       ],
     },
     {
       title: "Secure",
       items: [
-        { label: "Security capabilities", value: "security/discover" },
-        { label: "Audit events", value: "audit_events" },
-        { label: "Security configuration", value: "security/configuration" },
+        { label: "Security capabilities", feature: "security/discover" },
+        { label: "Audit events", feature: "audit_events" },
+        { label: "Security configuration", feature: "security/configuration" },
       ],
     },
     {
       title: "Deploy",
       items: [
-        { label: "Releases", value: "releases" },
-        { label: "Feature flags", value: "feature_flags" },
-        { label: "Package registry", value: "packages" },
-        { label: "Model registry", value: "ml/models" },
+        { label: "Releases", feature: "releases" },
+        { label: "Feature flags", feature: "feature_flags" },
+        { label: "Package registry", feature: "packages" },
+        { label: "Model registry", feature: "ml/models" },
       ],
     },
     {
       title: "Operate",
       items: [
-        { label: "Environments", value: "environments" },
-        { label: "Kubernetes clusters", value: "clusters" },
-        { label: "Terraform states", value: "terraform" },
-        { label: "Terraform modules", value: "terraform_module_registry" },
-        { label: "Google Cloud", value: "google_cloud/configuration" },
+        { label: "Environments", feature: "environments" },
+        { label: "Kubernetes clusters", feature: "clusters" },
+        { label: "Terraform states", feature: "terraform" },
+        { label: "Terraform modules", feature: "terraform_module_registry" },
+        { label: "Google Cloud", feature: "google_cloud/configuration" },
       ],
     },
     {
       title: "Monitor",
       items: [
-        { label: "Error Tracking", value: "error_tracking" },
-        { label: "Alerts", value: "alert_management" },
-        { label: "Incidents", value: "incidents" },
-        { label: "Service Desk", value: "issues/service_desk" },
+        { label: "Error Tracking", feature: "error_tracking" },
+        { label: "Alerts", feature: "alert_management" },
+        { label: "Incidents", feature: "incidents" },
+        { label: "Service Desk", feature: "issues/service_desk" },
       ],
     },
     {
       title: "Analyze",
       items: [
-        { label: "Value stream analytics", value: "value_stream_analytics" },
-        { label: "Contributor analytics", value: "graphs" },
-        { label: "CI/CD analytics", value: "pipelines/charts" },
-        { label: "Code review analytics", value: "analytics/code_reviews" },
-        { label: "Issue analytics", value: "analytics/issues_analytics" },
-        { label: "Model experiments", value: "ml/experiments" },
+        { label: "Value stream analytics", feature: "value_stream_analytics" },
+        { label: "Contributor analytics", feature: "graphs" },
+        { label: "CI/CD analytics", feature: "pipelines/charts" },
+        { label: "Code review analytics", feature: "analytics/code_reviews" },
+        { label: "Issue analytics", feature: "analytics/issues_analytics" },
+        { label: "Model experiments", feature: "ml/experiments" },
       ],
     },
     {
       title: "Settings",
       items: [
-        { label: "Integrations", value: "settings/integrations" },
-        { label: "Webhooks", value: "hooks" },
-        { label: "Access tokens", value: "settings/access_tokens" },
-        { label: "Repository", value: "settings/repository" },
-        { label: "Merge requests", value: "settings/merge_requests" },
-        { label: "CI/CD", value: "settings/ci_cd" },
+        { label: "Integrations", feature: "settings/integrations" },
+        { label: "Webhooks", feature: "hooks" },
+        { label: "Access tokens", feature: "settings/access_tokens" },
+        { label: "Repository", feature: "settings/repository" },
+        { label: "Merge requests", feature: "settings/merge_requests" },
+        { label: "CI/CD", feature: "settings/ci_cd" },
         {
           label: "Packages and registries",
-          value: "settings/packages_and_registries",
+          feature: "settings/packages_and_registries",
         },
-        { label: "Monitor", value: "settings/operations" },
-        { label: "Usage Quotas", value: "usage_quotas" },
+        { label: "Monitor", feature: "settings/operations" },
+        { label: "Usage Quotas", feature: "usage_quotas" },
       ],
     },
   ];
 
-const FeatureList: React.FC = () => (
-  <Listbox aria-label="Project features" selectionMode="single">
-    {PROJECT_FEATURE_LIST.map((section) => (
-      <ListboxSection key={section.title} title={section.title}>
-        {section.items.map((item) => (
-          <ListboxItem key={item.value} textValue={item.label}>
-            {item.label}
-          </ListboxItem>
-        ))}
+const FeatureList: React.FC<{
+  path: string;
+  currentFeature: ProjectFeature | undefined;
+  loadingFeature: ProjectFeature | undefined;
+  search: string;
+  onNavigate: (feature: string) => void;
+}> = ({ path, currentFeature, loadingFeature, search, onNavigate }) => (
+  <Listbox
+    aria-label="Project features"
+    selectionMode="single"
+    selectedKeys={currentFeature !== undefined ? [currentFeature] : []}
+  >
+    {PROJECT_FEATURE_LIST.map(({ title, items }) => (
+      <ListboxSection key={title} title={title}>
+        {items.map(({ feature, label }) => {
+          const href = generateHref(path, feature, search);
+
+          return (
+            <ListboxItem
+              key={feature}
+              href={href}
+              textValue={label}
+              endContent={
+                loadingFeature === feature && (
+                  <Spinner size="sm" variant="gradient" />
+                )
+              }
+              onPress={() => {
+                onNavigate(feature);
+                void chrome.tabs.update({ url: href });
+              }}
+            >
+              {label}
+            </ListboxItem>
+          );
+        })}
       </ListboxSection>
     ))}
   </Listbox>
