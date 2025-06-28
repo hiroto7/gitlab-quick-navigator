@@ -6,7 +6,7 @@ import {
   ListboxSection,
   Skeleton,
 } from "@heroui/react";
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { Spinner } from "@heroui/react";
 import { useDrag } from "./hooks";
 import { StarIcon, StarredIcon } from "./icons";
@@ -19,7 +19,9 @@ import {
   ProjectFeature,
   findGroupFeature,
   findProjectFeature,
+  generateHref,
   getFeatureName,
+  updateTabUrl,
 } from "./lib";
 
 const GroupProjectList: React.FC<{
@@ -30,6 +32,8 @@ const GroupProjectList: React.FC<{
   starredProjects: readonly Project[];
   currentGroup: Group | "loading" | undefined;
   currentGroupProjects: readonly Project[] | "loading" | undefined;
+  loadingPath: string | undefined;
+  onNavigate: (path: string) => void;
   onStarredGroupsUpdate: (groups: readonly Group[]) => void;
   onStarredProjectsUpdate: (projects: readonly Project[]) => void;
 }> = ({
@@ -40,6 +44,8 @@ const GroupProjectList: React.FC<{
   starredProjects: currentStarredProjects,
   currentGroup: group,
   currentGroupProjects: projects,
+  loadingPath,
+  onNavigate,
   onStarredGroupsUpdate,
   onStarredProjectsUpdate,
 }) => {
@@ -58,9 +64,6 @@ const GroupProjectList: React.FC<{
     onDragEnd: onProjectDragEnd,
   } = useDrag(currentStarredProjects);
 
-  const [pressedKey, setPressedKey] = useState<string>();
-  if (pressedKey !== undefined && pressedKey === path) setPressedKey(undefined);
-
   const getListboxItem = useCallback(
     ({
       key,
@@ -70,6 +73,8 @@ const GroupProjectList: React.FC<{
       featurePath,
       featureName,
       starred,
+      isLoading,
+      onPress,
       onStar,
       onDragStart,
       onDragEnd,
@@ -83,22 +88,23 @@ const GroupProjectList: React.FC<{
       featurePath: string | undefined;
       featureName: string | undefined;
       starred: boolean;
+      isLoading: boolean;
+      onPress: () => void;
       onStar: (starred: boolean) => void;
       onDragStart: () => void;
       onDragEnd: () => void;
       onDragEnter: (() => void) | undefined;
       onDrop: () => void;
     }) => {
-      const href =
-        featurePath !== undefined ? `${base}/-/${featurePath}${search}` : base;
+      const href = generateHref(base, featurePath, search);
 
       return (
         <ListboxItem
           key={key}
           href={href}
           onPress={() => {
-            setPressedKey(key);
-            void chrome.tabs.update({ url: href });
+            onPress();
+            void updateTabUrl(href);
           }}
           description={featureName}
           startContent={
@@ -112,14 +118,10 @@ const GroupProjectList: React.FC<{
             />
           }
           data-starred={starred}
-          data-loading={pressedKey === key && pressedKey !== path}
+          data-loading={isLoading}
           endContent={
             <>
-              <Spinner
-                size="sm"
-                variant="gradient"
-                className="group-data-[loading=false]:hidden"
-              />
+              {isLoading && <Spinner size="sm" variant="gradient" />}
               <Button
                 isIconOnly
                 variant="light"
@@ -151,7 +153,7 @@ const GroupProjectList: React.FC<{
         </ListboxItem>
       );
     },
-    [search, pressedKey, path],
+    [search],
   );
 
   const groupFeature: GroupFeature | undefined =
@@ -258,6 +260,10 @@ const GroupProjectList: React.FC<{
                 ? getFeatureName(groupFeature, GROUP_FEATURE_NAMES)
                 : undefined,
             starred: starred,
+            isLoading: loadingPath === group.full_path,
+            onPress: () => {
+              onNavigate(group.full_path);
+            },
             onStar: (starred) =>
               onStarredGroupsUpdate(
                 starred
@@ -308,6 +314,10 @@ const GroupProjectList: React.FC<{
                   ? getFeatureName(projectFeature, PROJECT_FEATURE_NAMES)
                   : undefined,
             starred: starred,
+            isLoading: loadingPath === project.path_with_namespace,
+            onPress: () => {
+              onNavigate(project.path_with_namespace);
+            },
             onStar: (starred) =>
               onStarredProjectsUpdate(
                 starred
