@@ -21,6 +21,7 @@ import {
   findProjectFeature,
   generateHref,
   getFeatureName,
+  updateTabUrl,
 } from "./lib";
 
 const GroupProjectList: React.FC<{
@@ -103,7 +104,7 @@ const GroupProjectList: React.FC<{
           href={href}
           onPress={() => {
             onPress();
-            void chrome.tabs.update({ url: href });
+            void updateTabUrl(href);
           }}
           description={featureName}
           startContent={

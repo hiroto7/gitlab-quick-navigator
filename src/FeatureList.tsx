@@ -1,6 +1,11 @@
 import { Listbox, ListboxItem, ListboxSection, Spinner } from "@heroui/react";
 import React from "react";
-import { generateHref, GroupFeature, ProjectFeature } from "./lib";
+import {
+  generateHref,
+  GroupFeature,
+  ProjectFeature,
+  updateTabUrl,
+} from "./lib";
 
 interface ProjectFeatureListSection<F extends GroupFeature | ProjectFeature> {
   title: string;
@@ -124,12 +129,12 @@ const PROJECT_FEATURE_LIST: readonly ProjectFeatureListSection<ProjectFeature>[]
   ];
 
 const FeatureList: React.FC<{
-  path: string;
+  base: string;
   currentFeature: ProjectFeature | undefined;
   loadingFeature: ProjectFeature | undefined;
   search: string;
   onNavigate: (feature: string) => void;
-}> = ({ path, currentFeature, loadingFeature, search, onNavigate }) => (
+}> = ({ base, currentFeature, loadingFeature, search, onNavigate }) => (
   <Listbox
     aria-label="Project features"
     selectionMode="single"
@@ -138,7 +143,7 @@ const FeatureList: React.FC<{
     {PROJECT_FEATURE_LIST.map(({ title, items }) => (
       <ListboxSection key={title} title={title}>
         {items.map(({ feature, label }) => {
-          const href = generateHref(path, feature, search);
+          const href = generateHref(base, feature, search);
 
           return (
             <ListboxItem
@@ -152,7 +157,7 @@ const FeatureList: React.FC<{
               }
               onPress={() => {
                 onNavigate(feature);
-                void chrome.tabs.update({ url: href });
+                void updateTabUrl(href);
               }}
             >
               {label}

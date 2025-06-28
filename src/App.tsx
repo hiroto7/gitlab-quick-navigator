@@ -1,4 +1,4 @@
-import { Button, Link, Progress, Tab, Tabs } from "@heroui/react";
+import { Button, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
 import React, { useState } from "react";
 import "./App.css";
 import CustomAlert from "./CustomAlert";
@@ -165,6 +165,9 @@ const Main: React.FC<{
 
   const [tab, setTab] = useState("groups-and-projects");
 
+  const isPathLoading = currentPath !== path;
+  const isFeatureLoading = currentFeature !== feature;
+
   return (
     <>
       <Progress
@@ -207,14 +210,22 @@ const Main: React.FC<{
           selectedKey={tab}
           onSelectionChange={(key) => setTab(key.toString())}
         >
-          <Tab title="Groups & Projects" key="groups-and-projects">
+          <Tab
+            title={
+              <div className="flex items-center gap-2">
+                <span>Groups & Projects</span>
+                {isPathLoading && <Spinner size="sm" variant="gradient" />}
+              </div>
+            }
+            key="groups-and-projects"
+          >
             <GroupProjectList
               starredGroups={starredGroups}
               starredProjects={starredProjects}
               currentGroup={!isGroupLoading ? group : "loading"}
               currentGroupProjects={!isProjectsLoading ? projects : "loading"}
               path={currentPath}
-              feature={feature ?? currentFeature}
+              feature={feature}
               search={url.search}
               loadingPath={currentPath !== path ? path : undefined}
               onNavigate={(nextPath) => {
@@ -225,10 +236,19 @@ const Main: React.FC<{
               onStarredProjectsUpdate={onStarredProjectsUpdate}
             />
           </Tab>
-          <Tab title="Features" key="features" disabled={project === undefined}>
+          <Tab
+            title={
+              <div className="flex items-center gap-2">
+                <span>Features</span>
+                {isFeatureLoading && <Spinner size="sm" variant="gradient" />}
+              </div>
+            }
+            key="features"
+            disabled={project === undefined}
+          >
             {project !== undefined && (
               <FeatureList
-                path={project.web_url}
+                base={project.web_url}
                 currentFeature={
                   currentFeature !== undefined
                     ? findProjectFeature(currentFeature, project)

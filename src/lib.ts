@@ -489,3 +489,5 @@ export const generateHref = (
   if (feature === undefined) return base;
   else return `${base}/-/${feature}${search}`;
 };
+
+export const updateTabUrl = (url: string) => chrome.tabs.update({ url });
