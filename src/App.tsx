@@ -1,10 +1,20 @@
-import { Button, Link, Progress } from "@heroui/react";
-import React from "react";
+import { Button, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
+import React, { useState } from "react";
 import "./App.css";
 import CustomAlert from "./CustomAlert";
+import { GroupFeatureList, ProjectFeatureList } from "./FeatureList";
 import GroupProjectList from "./GroupProjectList";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
-import { Group, parsePathname, Project, StoredData } from "./lib";
+import {
+  findGroupFeature,
+  findProjectFeature,
+  Group,
+  GroupFeature,
+  parsePathname,
+  Project,
+  ProjectFeature,
+  StoredData,
+} from "./lib";
 
 const groupDetailEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
@@ -107,7 +117,17 @@ const Main: React.FC<{
   onStarredGroupsUpdate,
   onStarredProjectsUpdate,
 }) => {
-  const { path, feature } = parsePathname(url.pathname);
+  const { path: currentPath, feature: currentFeature } = parsePathname(
+    url.pathname,
+  );
+
+  const [loadingPath, setLoadingPath] = useState<string>();
+  const [loadingFeature, setLoadingFeature] = useState<
+    GroupFeature | ProjectFeature
+  >();
+
+  const path = loadingPath ?? currentPath;
+  const feature = loadingFeature ?? currentFeature;
 
   const {
     data: group,
@@ -147,6 +167,34 @@ const Main: React.FC<{
       ),
   );
 
+  const project = projects?.find(
+    (project) => project.path_with_namespace === path,
+  );
+
+  const currentGroupFeature =
+    currentFeature !== undefined ? findGroupFeature(currentFeature) : undefined;
+
+  const currentProjectFeature =
+    project !== undefined && currentFeature !== undefined
+      ? findProjectFeature(currentFeature, project)
+      : undefined;
+
+  if (loadingPath !== undefined && loadingPath === currentPath)
+    setLoadingPath(undefined);
+  if (
+    loadingFeature !== undefined &&
+    (loadingFeature === currentGroupFeature ||
+      loadingFeature === currentProjectFeature)
+  )
+    setLoadingFeature(undefined);
+
+  const [selectedTab, setTab] = useState<"groups-and-projects" | "features">(
+    "groups-and-projects",
+  );
+  const isFeatureTabEnabled =
+    (group !== undefined && group.full_path === path) || project !== undefined;
+  const tab = isFeatureTabEnabled ? selectedTab : "groups-and-projects";
+
   return (
     <>
       <Progress
@@ -182,17 +230,81 @@ const Main: React.FC<{
       ) : (
         <></>
       )}
-      <GroupProjectList
-        starredGroups={starredGroups}
-        starredProjects={starredProjects}
-        currentGroup={!isGroupLoading ? group : "loading"}
-        currentGroupProjects={!isProjectsLoading ? projects : "loading"}
-        path={path}
-        feature={feature}
-        search={url.search}
-        onStarredGroupsUpdate={onStarredGroupsUpdate}
-        onStarredProjectsUpdate={onStarredProjectsUpdate}
-      />
+
+      <Tabs
+        fullWidth
+        classNames={{ base: "p-2" }}
+        selectedKey={tab}
+        onSelectionChange={(key) =>
+          setTab(key as "groups-and-projects" | "features")
+        }
+        disabledKeys={!isFeatureTabEnabled ? ["features"] : []}
+      >
+        <Tab
+          title={
+            <div className="flex items-center gap-2">
+              <span>Groups & Projects</span>
+              {loadingPath !== undefined && (
+                <Spinner size="sm" variant="gradient" />
+              )}
+            </div>
+          }
+          key="groups-and-projects"
+        >
+          <GroupProjectList
+            starredGroups={starredGroups}
+            starredProjects={starredProjects}
+            currentGroup={!isGroupLoading ? group : "loading"}
+            currentGroupProjects={!isProjectsLoading ? projects : "loading"}
+            path={currentPath}
+            feature={feature}
+            search={url.search}
+            loadingPath={loadingPath}
+            onNavigate={(nextPath) => {
+              setLoadingPath(nextPath);
+              setTab("features");
+            }}
+            onStarredGroupsUpdate={onStarredGroupsUpdate}
+            onStarredProjectsUpdate={onStarredProjectsUpdate}
+          />
+        </Tab>
+        <Tab
+          title={
+            <div className="flex items-center gap-2">
+              <span>Features</span>
+              {loadingFeature !== undefined && (
+                <Spinner size="sm" variant="gradient" />
+              )}
+            </div>
+          }
+          key="features"
+        >
+          {group !== undefined && group.full_path === path && (
+            <GroupFeatureList
+              group={group}
+              currentFeature={currentFeature}
+              loadingFeature={loadingFeature}
+              search={url.search}
+              onNavigate={(nextFeature) => {
+                setLoadingFeature(nextFeature);
+                setTab("groups-and-projects");
+              }}
+            />
+          )}
+          {project !== undefined && (
+            <ProjectFeatureList
+              project={project}
+              currentFeature={currentFeature}
+              loadingFeature={loadingFeature}
+              search={url.search}
+              onNavigate={(nextFeature) => {
+                setLoadingFeature(nextFeature);
+                setTab("groups-and-projects");
+              }}
+            />
+          )}
+        </Tab>
+      </Tabs>
     </>
   );
 };
