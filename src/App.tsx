@@ -4,7 +4,7 @@ import "./App.css";
 import CustomAlert from "./CustomAlert";
 import GroupProjectList from "./GroupProjectList";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
-import { Group, parsePathname, Project } from "./lib";
+import { Group, parsePathname, Project, StoredData } from "./lib";
 
 const groupDetailEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
@@ -199,11 +199,10 @@ const Main: React.FC<{
 
 const App: React.FC = () => {
   const url = useCurrentUrl();
-  const { items: storedData, set } = useChromeStorage<{
-    origins?: Record<string, { token?: string }>;
-    groups?: readonly Group[];
-    projects?: readonly Project[];
-  }>("local", true);
+  const { items: storedData, set } = useChromeStorage<StoredData>(
+    "local",
+    true,
+  );
 
   if (url === undefined || storedData === undefined) return;
 
