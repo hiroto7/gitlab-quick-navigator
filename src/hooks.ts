@@ -4,6 +4,7 @@ import { move } from "./lib";
 
 export const useCurrentUrl = () => {
   const [href, setHref] = useState<string>();
+  const [currentWindowId, setCurrentWindowId] = useState<number>();
   const [currentTabId, setCurrentTabId] = useState<number>();
   const url = useMemo(
     () => (href !== undefined ? new URL(href) : undefined),
@@ -19,8 +20,26 @@ export const useCurrentUrl = () => {
       const tab = tabs[0];
       setHref(tab?.url);
       setCurrentTabId(tab?.id);
+      setCurrentWindowId(tab?.windowId);
     })();
   }, []);
+
+  useEffect(() => {
+    const callback = (activeInfo: chrome.tabs.TabActiveInfo) => {
+      if (activeInfo.windowId !== currentWindowId) return;
+      const tabId = activeInfo.tabId;
+      setCurrentTabId(tabId);
+      void (async () => {
+        const tab = await chrome.tabs.get(tabId);
+        if (tab?.url !== "") setHref(tab?.url);
+      })();
+    };
+
+    chrome.tabs.onActivated.addListener(callback);
+    return () => {
+      chrome.tabs.onActivated.removeListener(callback);
+    };
+  });
 
   useEffect(() => {
     const callback = (
