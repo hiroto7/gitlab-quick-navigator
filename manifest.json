@@ -2,7 +2,8 @@
   "manifest_version": 3,
   "name": "GitLab Quick Navigator",
   "version": "1.0.0",
-  "action": { "default_popup": "index.html" },
-  "permissions": ["tabs", "storage"],
+  "background": { "service_worker": "src/background.ts" },
+  "side_panel": { "default_path": "index.html" },
+  "permissions": ["tabs", "storage", "sidePanel"],
   "options_page": "options.html"
 }
