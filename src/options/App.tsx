@@ -1,4 +1,4 @@
-import { Button, Listbox, ListboxItem } from "@heroui/react";
+import { Button, Listbox, ListboxItem, Radio, RadioGroup } from "@heroui/react";
 import { useChromeStorage } from "../hooks";
 import { StoredData } from "../lib";
 
@@ -10,55 +10,68 @@ const App: React.FC = () => {
 
   if (storedData === undefined) return undefined;
 
-  const options = storedData.origins ?? {};
+  const { origins = {}, actionBehavior = "side_panel" } = storedData;
   return (
-    <Listbox
-      shouldHighlightOnFocus={false}
-      className="mx-auto max-w-xl"
-      topContent="GitLab Quick Navigatorを有効化したサイト"
-    >
-      {Object.entries(options).map(([origin, siteOptions]) => {
-        const host = new URL(origin).host;
+    <div className="mx-auto max-w-xl space-y-8 p-4">
+      <h1>GitLab Quick Navigatorの設定</h1>
+      <RadioGroup
+        label="アイコンクリック時の動作"
+        value={actionBehavior}
+        onValueChange={(value) => {
+          void set({ actionBehavior: value as "popup" | "side_panel" });
+        }}
+      >
+        <Radio value="side_panel">サイドパネルで開く</Radio>
+        <Radio value="popup">ポップアップで開く</Radio>
+      </RadioGroup>
 
-        return (
-          <ListboxItem
-            showDivider
-            key={origin}
-            description={
-              siteOptions.token !== undefined
-                ? "アクセストークン設定済み"
-                : undefined
-            }
-            endContent={
-              <Button
-                size="sm"
-                color="danger"
-                onPress={() => {
-                  if (
-                    siteOptions.token === undefined ||
-                    confirm(
-                      `${host} でGitLab Quick Navigatorを無効化してもよろしいですか？無効化すると設定済みのアクセストークンが削除されます。`,
+      <Listbox
+        shouldHighlightOnFocus={false}
+        topContent="GitLab Quick Navigatorを有効化したサイト"
+      >
+        {Object.entries(origins).map(([origin, siteOptions]) => {
+          const host = new URL(origin).host;
+
+          return (
+            <ListboxItem
+              showDivider
+              key={origin}
+              description={
+                siteOptions.token !== undefined
+                  ? "アクセストークン設定済み"
+                  : undefined
+              }
+              endContent={
+                <Button
+                  size="sm"
+                  color="danger"
+                  onPress={() => {
+                    if (
+                      siteOptions.token === undefined ||
+                      confirm(
+                        `${host} でGitLab Quick Navigatorを無効化してもよろしいですか？無効化すると設定済みのアクセストークンが削除されます。`,
+                      )
                     )
-                  )
-                    void set({
-                      origins: Object.fromEntries(
-                        Object.entries(options).filter(
-                          ([key]) => key !== origin,
+                      void set({
+                        origins: Object.fromEntries(
+                          Object.entries(origins).filter(
+                            ([key]) => key !== origin,
+                          ),
                         ),
-                      ),
-                    });
-                }}
-                className="flex-shrink-0"
-              >
-                無効にする
-              </Button>
-            }
-          >
-            {origin}
-          </ListboxItem>
-        );
-      })}
-    </Listbox>
+                      });
+                  }}
+                  className="flex-shrink-0"
+                >
+                  無効にする
+                </Button>
+              }
+            >
+              {origin}
+            </ListboxItem>
+          );
+        })}
+      </Listbox>
+    </div>
   );
 };
 
