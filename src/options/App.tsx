@@ -1,10 +1,12 @@
 import { Button, Listbox, ListboxItem } from "@heroui/react";
 import { useChromeStorage } from "../hooks";
+import { StoredData } from "../lib";
 
 const App: React.FC = () => {
-  const { items: storedData, set } = useChromeStorage<{
-    origins?: Record<string, { token?: string }>;
-  }>("local", true);
+  const { items: storedData, set } = useChromeStorage<StoredData>(
+    "local",
+    true,
+  );
 
   if (storedData === undefined) return undefined;
 
