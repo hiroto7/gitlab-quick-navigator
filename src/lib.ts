@@ -480,3 +480,14 @@ export const findProjectFeature = (feature: string, project: Project) =>
       feature.startsWith(projectFeature) &&
       (isProjectFeatureAvailable[projectFeature]?.(project) ?? true),
   );
+
+export const generateHref = (
+  base: string,
+  feature: string | undefined,
+  search: string,
+): string => {
+  if (feature === undefined) return base;
+  else return `${base}/-/${feature}${search}`;
+};
+
+export const updateTabUrl = (url: string) => chrome.tabs.update({ url });

@@ -1,10 +1,17 @@
-import { Button, Link, Progress } from "@heroui/react";
-import React from "react";
+import { Button, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
+import React, { useState } from "react";
 import "./App.css";
 import CustomAlert from "./CustomAlert";
 import GroupProjectList from "./GroupProjectList";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
-import { Group, parsePathname, Project } from "./lib";
+import {
+  findProjectFeature,
+  Group,
+  parsePathname,
+  Project,
+  ProjectFeature,
+} from "./lib";
+import FeatureList from "./FeatureList";
 
 const groupDetailEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
@@ -107,7 +114,20 @@ const Main: React.FC<{
   onStarredGroupsUpdate,
   onStarredProjectsUpdate,
 }) => {
-  const { path, feature } = parsePathname(url.pathname);
+  const { path: currentPath, feature: currentFeature } = parsePathname(
+    url.pathname,
+  );
+
+  const [loadingPath, setLoadingPath] = useState<string>();
+  const [loadingFeature, setLoadingFeature] = useState<string>();
+
+  if (loadingPath !== undefined && loadingPath === currentPath)
+    setLoadingPath(undefined);
+  if (loadingFeature !== undefined && loadingFeature === currentFeature)
+    setLoadingFeature(undefined);
+
+  const path = loadingPath ?? currentPath;
+  const feature = loadingFeature ?? currentFeature;
 
   const {
     data: group,
@@ -147,6 +167,15 @@ const Main: React.FC<{
       ),
   );
 
+  const project = projects?.find(
+    (project) => project.path_with_namespace === path,
+  );
+
+  const [tab, setTab] = useState("groups-and-projects");
+
+  const isPathLoading = loadingPath !== undefined;
+  const isFeatureLoading = loadingFeature !== undefined;
+
   return (
     <>
       <Progress
@@ -163,7 +192,7 @@ const Main: React.FC<{
         <div className="m-2">
           <Alert1 host={url.host} onEnable={onEnable} />
         </div>
-      ) : path === undefined ? (
+      ) : currentPath === undefined ? (
         <div className="m-2">
           <Alert2 />
         </div>
@@ -182,17 +211,72 @@ const Main: React.FC<{
       ) : (
         <></>
       )}
-      <GroupProjectList
-        starredGroups={starredGroups}
-        starredProjects={starredProjects}
-        currentGroup={!isGroupLoading ? group : "loading"}
-        currentGroupProjects={!isProjectsLoading ? projects : "loading"}
-        path={path}
-        feature={feature}
-        search={url.search}
-        onStarredGroupsUpdate={onStarredGroupsUpdate}
-        onStarredProjectsUpdate={onStarredProjectsUpdate}
-      />
+      <div>
+        <Tabs
+          fullWidth
+          classNames={{ base: "p-2" }}
+          selectedKey={tab}
+          onSelectionChange={(key) => setTab(key.toString())}
+          disabledKeys={project === undefined ? ["features"] : []}
+        >
+          <Tab
+            title={
+              <div className="flex items-center gap-2">
+                <span>Groups & Projects</span>
+                {isPathLoading && <Spinner size="sm" variant="gradient" />}
+              </div>
+            }
+            key="groups-and-projects"
+          >
+            <GroupProjectList
+              starredGroups={starredGroups}
+              starredProjects={starredProjects}
+              currentGroup={!isGroupLoading ? group : "loading"}
+              currentGroupProjects={!isProjectsLoading ? projects : "loading"}
+              path={currentPath}
+              feature={feature}
+              search={url.search}
+              loadingPath={currentPath !== path ? path : undefined}
+              onNavigate={(nextPath) => {
+                setLoadingPath(nextPath);
+                setTab("features");
+              }}
+              onStarredGroupsUpdate={onStarredGroupsUpdate}
+              onStarredProjectsUpdate={onStarredProjectsUpdate}
+            />
+          </Tab>
+          <Tab
+            title={
+              <div className="flex items-center gap-2">
+                <span>Features</span>
+                {isFeatureLoading && <Spinner size="sm" variant="gradient" />}
+              </div>
+            }
+            key="features"
+          >
+            {project !== undefined && (
+              <FeatureList
+                base={project.web_url}
+                currentFeature={
+                  currentFeature !== undefined
+                    ? findProjectFeature(currentFeature, project)
+                    : undefined
+                }
+                loadingFeature={
+                  currentFeature !== feature
+                    ? (feature as unknown as ProjectFeature | undefined)
+                    : undefined
+                }
+                search={url.search}
+                onNavigate={(nextFeature) => {
+                  setLoadingFeature(nextFeature);
+                  setTab("groups-and-projects");
+                }}
+              />
+            )}
+          </Tab>
+        </Tabs>
+      </div>
     </>
   );
 };
