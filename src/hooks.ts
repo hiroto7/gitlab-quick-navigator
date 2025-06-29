@@ -23,6 +23,22 @@ export const useCurrentUrl = () => {
   }, []);
 
   useEffect(() => {
+    const callback = (activeInfo: chrome.tabs.TabActiveInfo) => {
+      void (async () => {
+        const tabId = activeInfo.tabId;
+        setCurrentTabId(tabId);
+        const tab = await chrome.tabs.get(tabId);
+        setHref(tab?.url);
+      })();
+    };
+
+    chrome.tabs.onActivated.addListener(callback);
+    return () => {
+      chrome.tabs.onActivated.removeListener(callback);
+    };
+  });
+
+  useEffect(() => {
     const callback = (
       updatedTabId: number,
       changeInfo: chrome.tabs.TabChangeInfo,
