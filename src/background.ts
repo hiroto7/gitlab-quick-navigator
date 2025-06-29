@@ -1,1 +1,34 @@
-await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+import { StoredData } from "./lib";
+
+const updateActionBehavior = async (actionBehavior: "popup" | "side_panel") => {
+  switch (actionBehavior) {
+    case "side_panel":
+      await chrome.action.setPopup({ popup: "" });
+      await chrome.sidePanel.setOptions({ enabled: true });
+      await chrome.sidePanel.setPanelBehavior({
+        openPanelOnActionClick: true,
+      });
+      break;
+
+    case "popup":
+      await chrome.action.setPopup({ popup: "index.html" });
+      await chrome.sidePanel.setOptions({ enabled: false });
+      await chrome.sidePanel.setPanelBehavior({
+        openPanelOnActionClick: false,
+      });
+      break;
+  }
+};
+
+chrome.storage.local.onChanged.addListener((changes) => {
+  if ("actionBehavior" in changes)
+    void updateActionBehavior(
+      changes["actionBehavior"].newValue as "popup" | "side_panel",
+    );
+});
+
+void (async () => {
+  const { actionBehavior = "side_panel" }: StoredData =
+    await chrome.storage.local.get("actionBehavior");
+  void updateActionBehavior(actionBehavior);
+})();

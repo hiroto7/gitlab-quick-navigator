@@ -485,4 +485,5 @@ export interface StoredData {
   origins?: Record<string, { token?: string }>;
   groups?: readonly Group[];
   projects?: readonly Project[];
+  actionBehavior?: "popup" | "side_panel";
 }
