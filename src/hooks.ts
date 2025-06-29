@@ -28,7 +28,7 @@ export const useCurrentUrl = () => {
         const tabId = activeInfo.tabId;
         setCurrentTabId(tabId);
         const tab = await chrome.tabs.get(tabId);
-        setHref(tab?.url);
+        if (tab?.url !== "") setHref(tab?.url);
       })();
     };
 
