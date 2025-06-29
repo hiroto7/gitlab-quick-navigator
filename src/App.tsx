@@ -118,8 +118,16 @@ const Main: React.FC<{
     url.pathname,
   );
 
-  const [path, setPath] = useState(currentPath);
-  const [feature, setFeature] = useState(currentFeature);
+  const [loadingPath, setLoadingPath] = useState<string>();
+  const [loadingFeature, setLoadingFeature] = useState<string>();
+
+  if (loadingPath !== undefined && loadingPath === currentPath)
+    setLoadingPath(undefined);
+  if (loadingFeature !== undefined && loadingFeature === currentFeature)
+    setLoadingFeature(undefined);
+
+  const path = loadingPath ?? currentPath;
+  const feature = loadingFeature ?? currentFeature;
 
   const {
     data: group,
@@ -165,8 +173,8 @@ const Main: React.FC<{
 
   const [tab, setTab] = useState("groups-and-projects");
 
-  const isPathLoading = currentPath !== path;
-  const isFeatureLoading = currentFeature !== feature;
+  const isPathLoading = loadingPath !== undefined;
+  const isFeatureLoading = loadingFeature !== undefined;
 
   return (
     <>
@@ -230,7 +238,7 @@ const Main: React.FC<{
               search={url.search}
               loadingPath={currentPath !== path ? path : undefined}
               onNavigate={(nextPath) => {
-                setPath(nextPath);
+                setLoadingPath(nextPath);
                 setTab("features");
               }}
               onStarredGroupsUpdate={onStarredGroupsUpdate}
@@ -261,7 +269,7 @@ const Main: React.FC<{
                 }
                 search={url.search}
                 onNavigate={(nextFeature) => {
-                  setFeature(nextFeature);
+                  setLoadingFeature(nextFeature);
                   setTab("groups-and-projects");
                 }}
               />
