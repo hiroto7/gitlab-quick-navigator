@@ -480,3 +480,10 @@ export const findProjectFeature = (feature: string, project: Project) =>
       feature.startsWith(projectFeature) &&
       (isProjectFeatureAvailable[projectFeature]?.(project) ?? true),
   );
+
+export interface StoredData {
+  origins?: Record<string, { token?: string }>;
+  groups?: readonly Group[];
+  projects?: readonly Project[];
+  actionBehavior?: "popup" | "side_panel";
+}

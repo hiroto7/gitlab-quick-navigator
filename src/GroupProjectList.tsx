@@ -59,6 +59,7 @@ const GroupProjectList: React.FC<{
   } = useDrag(currentStarredProjects);
 
   const [pressedKey, setPressedKey] = useState<string>();
+  if (pressedKey !== undefined && pressedKey === path) setPressedKey(undefined);
 
   const getListboxItem = useCallback(
     ({
