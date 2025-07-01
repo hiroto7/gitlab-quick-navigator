@@ -1,4 +1,11 @@
-import { Button, Listbox, ListboxItem, Radio, RadioGroup } from "@heroui/react";
+import {
+  Button,
+  Listbox,
+  ListboxItem,
+  Radio,
+  RadioGroup,
+  Checkbox,
+} from "@heroui/react";
 import { useChromeStorage } from "../hooks";
 import { StoredData } from "../lib";
 
@@ -10,20 +17,36 @@ const App: React.FC = () => {
 
   if (storedData === undefined) return undefined;
 
-  const { origins = {}, actionBehavior = "side_panel" } = storedData;
+  const {
+    origins = {},
+    actionBehavior = "side_panel",
+    autoTabSwitch = false,
+  } = storedData;
   return (
     <div className="mx-auto max-w-xl space-y-8 p-4">
       <h1>GitLab Quick Navigatorの設定</h1>
-      <RadioGroup
-        label="アイコンクリック時の動作"
-        value={actionBehavior}
-        onValueChange={(value) => {
-          void set({ actionBehavior: value as "popup" | "side_panel" });
-        }}
-      >
-        <Radio value="side_panel">サイドパネルで開く</Radio>
-        <Radio value="popup">ポップアップで開く</Radio>
-      </RadioGroup>
+
+      <div className="space-y-4">
+        <RadioGroup
+          label="アイコンクリック時の動作"
+          value={actionBehavior}
+          onValueChange={(value) => {
+            void set({ actionBehavior: value as "popup" | "side_panel" });
+          }}
+        >
+          <Radio value="side_panel">サイドパネルで開く</Radio>
+          <Radio value="popup">ポップアップで開く</Radio>
+        </RadioGroup>
+
+        <Checkbox
+          isSelected={autoTabSwitch}
+          onValueChange={(isSelected) =>
+            void set({ autoTabSwitch: isSelected })
+          }
+        >
+          アイテム選択時に自動でタブを切り替える
+        </Checkbox>
+      </div>
 
       <Listbox
         shouldHighlightOnFocus={false}

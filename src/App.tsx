@@ -99,6 +99,7 @@ const Main: React.FC<{
   url: URL;
   starredGroups: readonly Group[];
   starredProjects: readonly Project[];
+  autoTabSwitch: boolean;
   onEnable: () => void;
   onSetToken: (token: string) => void;
   onDeleteToken: () => void;
@@ -109,6 +110,7 @@ const Main: React.FC<{
   url,
   starredGroups,
   starredProjects,
+  autoTabSwitch,
   onEnable,
   onSetToken,
   onDeleteToken,
@@ -268,7 +270,7 @@ const Main: React.FC<{
             loadingPath={loadingPath}
             onNavigate={(nextPath) => {
               setLoadingPath(nextPath);
-              setTab("features");
+              if (autoTabSwitch) setTab("features");
             }}
             onStarredGroupsUpdate={onStarredGroupsUpdate}
             onStarredProjectsUpdate={onStarredProjectsUpdate}
@@ -293,7 +295,7 @@ const Main: React.FC<{
               search={url.search}
               onNavigate={(nextFeature) => {
                 setLoadingFeature(nextFeature);
-                setTab("groups-and-projects");
+                if (autoTabSwitch) setTab("groups-and-projects");
               }}
             />
           )}
@@ -305,7 +307,7 @@ const Main: React.FC<{
               search={url.search}
               onNavigate={(nextFeature) => {
                 setLoadingFeature(nextFeature);
-                setTab("groups-and-projects");
+                if (autoTabSwitch) setTab("groups-and-projects");
               }}
             />
           )}
@@ -324,14 +326,20 @@ const App: React.FC = () => {
 
   if (url === undefined || storedData === undefined) return;
 
-  const { origins, groups, projects } = storedData;
+  const {
+    origins,
+    groups = [],
+    projects = [],
+    autoTabSwitch = false,
+  } = storedData;
 
   return (
     <Main
       url={url}
       options={origins?.[url.origin]}
-      starredGroups={groups ?? []}
-      starredProjects={projects ?? []}
+      starredGroups={groups}
+      starredProjects={projects}
+      autoTabSwitch={autoTabSwitch}
       onEnable={() => void set({ origins: { ...origins, [url.origin]: {} } })}
       onSetToken={(token) =>
         void set({ origins: { ...origins, [url.origin]: { token } } })
