@@ -21,6 +21,7 @@ import {
   findProjectFeature,
   generateHref,
   getFeatureName,
+  getProjectFeaturePath,
   updateTabUrl,
 } from "./lib";
 
@@ -303,10 +304,9 @@ const GroupProjectList: React.FC<{
             name: project.name,
             avatar: project.avatar_url,
             featurePath:
-              projectFeature !== undefined &&
-              ["tree", "network", "graphs"].includes(projectFeature)
-                ? `${projectFeature}/${project.default_branch}`
-                : projectFeature,
+              projectFeature !== undefined
+                ? getProjectFeaturePath(projectFeature, project.default_branch)
+                : undefined,
             featureName:
               projectFeature === "issues" && project.open_issues_count > 0
                 ? `Issues (${project.open_issues_count.toLocaleString()})`

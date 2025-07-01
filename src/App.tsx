@@ -9,10 +9,8 @@ import {
   findGroupFeature,
   findProjectFeature,
   Group,
-  GroupFeature,
   parsePathname,
   Project,
-  ProjectFeature,
   StoredData,
 } from "./lib";
 
@@ -122,9 +120,7 @@ const Main: React.FC<{
   );
 
   const [loadingPath, setLoadingPath] = useState<string>();
-  const [loadingFeature, setLoadingFeature] = useState<
-    GroupFeature | ProjectFeature
-  >();
+  const [loadingFeature, setLoadingFeature] = useState<string>();
 
   const path = loadingPath ?? currentPath;
   const feature = loadingFeature ?? currentFeature;
