@@ -498,3 +498,12 @@ export interface StoredData {
   projects?: readonly Project[];
   actionBehavior?: "popup" | "side_panel";
 }
+
+export const getProjectFeaturePath = (
+  projectFeature: ProjectFeature,
+  branch: string | undefined,
+) => {
+  if (["tree", "network", "graphs"].includes(projectFeature))
+    return `${projectFeature}/${branch}`;
+  else return projectFeature;
+};

@@ -4,6 +4,7 @@ import {
   findGroupFeature,
   findProjectFeature,
   generateHref,
+  getProjectFeaturePath,
   Group,
   GroupFeature,
   isProjectFeatureAvailable,
@@ -12,7 +13,7 @@ import {
   updateTabUrl,
 } from "./lib";
 
-interface ProjectFeatureListSection<F extends GroupFeature | ProjectFeature> {
+interface ProjectFeatureListSection<F extends string> {
   title: string;
   items: readonly {
     label: string;
@@ -206,7 +207,7 @@ const PROJECT_FEATURE_LIST: readonly ProjectFeatureListSection<ProjectFeature>[]
     },
   ];
 
-const FeatureList = <F extends GroupFeature | ProjectFeature>({
+const FeatureList = ({
   base,
   list,
   currentFeature,
@@ -215,11 +216,11 @@ const FeatureList = <F extends GroupFeature | ProjectFeature>({
   onNavigate,
 }: {
   base: string;
-  list: readonly ProjectFeatureListSection<F>[];
-  currentFeature: F | undefined;
-  loadingFeature: GroupFeature | ProjectFeature | undefined;
+  list: readonly ProjectFeatureListSection<string>[];
+  currentFeature: string | undefined;
+  loadingFeature: string | undefined;
   search: string;
-  onNavigate: (feature: F) => void;
+  onNavigate: (feature: string) => void;
 }): React.ReactNode => (
   <Listbox
     selectionMode="single"
@@ -256,9 +257,9 @@ const FeatureList = <F extends GroupFeature | ProjectFeature>({
 export const GroupFeatureList: React.FC<{
   group: Group;
   currentFeature: string | undefined;
-  loadingFeature: GroupFeature | ProjectFeature | undefined;
+  loadingFeature: string | undefined;
   search: string;
-  onNavigate: (feature: GroupFeature) => void;
+  onNavigate: (feature: string) => void;
 }> = ({ group, currentFeature, loadingFeature, search, onNavigate }) => {
   const groupFeature =
     currentFeature !== undefined ? findGroupFeature(currentFeature) : undefined;
@@ -278,9 +279,9 @@ export const GroupFeatureList: React.FC<{
 export const ProjectFeatureList: React.FC<{
   project: Project;
   currentFeature: string | undefined;
-  loadingFeature: GroupFeature | ProjectFeature | undefined;
+  loadingFeature: string | undefined;
   search: string;
-  onNavigate: (feature: ProjectFeature) => void;
+  onNavigate: (feature: string) => void;
 }> = ({ project, currentFeature, loadingFeature, search, onNavigate }) => {
   const projectFeature =
     currentFeature !== undefined
@@ -292,10 +293,15 @@ export const ProjectFeatureList: React.FC<{
       base={project.web_url}
       list={PROJECT_FEATURE_LIST.map(({ title, items }) => ({
         title,
-        items: items.filter(
-          ({ feature }) =>
-            isProjectFeatureAvailable[feature]?.(project) ?? true,
-        ),
+        items: items
+          .filter(
+            ({ feature }) =>
+              isProjectFeatureAvailable[feature]?.(project) ?? true,
+          )
+          .map(({ feature, label }) => ({
+            feature: getProjectFeaturePath(feature, project.default_branch),
+            label,
+          })),
       })).filter(({ items }) => items.length > 0)}
       currentFeature={projectFeature}
       loadingFeature={loadingFeature}
