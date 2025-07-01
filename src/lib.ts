@@ -497,6 +497,7 @@ export interface StoredData {
   groups?: readonly Group[];
   projects?: readonly Project[];
   actionBehavior?: "popup" | "side_panel";
+  autoTabSwitch?: boolean;
 }
 
 export const getProjectFeaturePath = (
