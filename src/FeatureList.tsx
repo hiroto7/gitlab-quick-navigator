@@ -206,6 +206,53 @@ const PROJECT_FEATURE_LIST: readonly ProjectFeatureListSection<ProjectFeature>[]
     },
   ];
 
+const FeatureList = <F extends GroupFeature | ProjectFeature>({
+  base,
+  list,
+  currentFeature,
+  loadingFeature,
+  search,
+  onNavigate,
+}: {
+  base: string;
+  list: readonly ProjectFeatureListSection<F>[];
+  currentFeature: F | undefined;
+  loadingFeature: GroupFeature | ProjectFeature | undefined;
+  search: string;
+  onNavigate: (feature: F) => void;
+}): React.ReactNode => (
+  <Listbox
+    selectionMode="single"
+    selectedKeys={currentFeature !== undefined ? [currentFeature] : []}
+  >
+    {list.map(({ title, items }) => (
+      <ListboxSection key={title} title={title} showDivider>
+        {items.map(({ feature, label }) => {
+          const href = generateHref(base, feature, search);
+
+          return (
+            <ListboxItem
+              key={feature}
+              href={href}
+              endContent={
+                loadingFeature === feature ? (
+                  <Spinner size="sm" variant="gradient" />
+                ) : undefined
+              }
+              onPress={() => {
+                onNavigate(feature);
+                void updateTabUrl(href);
+              }}
+            >
+              {label}
+            </ListboxItem>
+          );
+        })}
+      </ListboxSection>
+    ))}
+  </Listbox>
+);
+
 export const GroupFeatureList: React.FC<{
   group: Group;
   currentFeature: string | undefined;
@@ -217,36 +264,14 @@ export const GroupFeatureList: React.FC<{
     currentFeature !== undefined ? findGroupFeature(currentFeature) : undefined;
 
   return (
-    <Listbox
-      selectionMode="single"
-      selectedKeys={groupFeature !== undefined ? [groupFeature] : []}
-    >
-      {GROUP_FEATURE_LIST.map(({ title, items }) => (
-        <ListboxSection key={title} title={title} showDivider>
-          {items.map(({ feature, label }) => {
-            const href = generateHref(group.web_url, feature, search);
-
-            return (
-              <ListboxItem
-                key={feature}
-                href={href}
-                endContent={
-                  loadingFeature === feature && (
-                    <Spinner size="sm" variant="gradient" />
-                  )
-                }
-                onPress={() => {
-                  onNavigate(feature);
-                  void updateTabUrl(href);
-                }}
-              >
-                {label}
-              </ListboxItem>
-            );
-          })}
-        </ListboxSection>
-      ))}
-    </Listbox>
+    <FeatureList
+      base={group.web_url}
+      list={GROUP_FEATURE_LIST}
+      currentFeature={groupFeature}
+      loadingFeature={loadingFeature}
+      search={search}
+      onNavigate={onNavigate}
+    />
   );
 };
 
@@ -263,41 +288,19 @@ export const ProjectFeatureList: React.FC<{
       : undefined;
 
   return (
-    <Listbox
-      selectionMode="single"
-      selectedKeys={projectFeature !== undefined ? [projectFeature] : []}
-    >
-      {PROJECT_FEATURE_LIST.map(({ title, items }) => ({
+    <FeatureList
+      base={project.web_url}
+      list={PROJECT_FEATURE_LIST.map(({ title, items }) => ({
         title,
         items: items.filter(
           ({ feature }) =>
             isProjectFeatureAvailable[feature]?.(project) ?? true,
         ),
-      })).map(({ title, items }) => (
-        <ListboxSection key={title} title={title} showDivider>
-          {items.map(({ feature, label }) => {
-            const href = generateHref(project.web_url, feature, search);
-
-            return (
-              <ListboxItem
-                key={feature}
-                href={href}
-                endContent={
-                  loadingFeature === feature ? (
-                    <Spinner size="sm" variant="gradient" />
-                  ) : undefined
-                }
-                onPress={() => {
-                  onNavigate(feature);
-                  void updateTabUrl(href);
-                }}
-              >
-                {label}
-              </ListboxItem>
-            );
-          })}
-        </ListboxSection>
-      ))}
-    </Listbox>
+      })).filter(({ items }) => items.length > 0)}
+      currentFeature={projectFeature}
+      loadingFeature={loadingFeature}
+      search={search}
+      onNavigate={onNavigate}
+    />
   );
 };
