@@ -175,12 +175,22 @@ const Main: React.FC<{
       ? findProjectFeature(currentFeature, project)
       : undefined;
 
+  const loadingGroupFeature =
+    loadingFeature !== undefined ? findGroupFeature(loadingFeature) : undefined;
+
+  const loadingProjectFeature =
+    project !== undefined && loadingFeature !== undefined
+      ? findProjectFeature(loadingFeature, project)
+      : undefined;
+
   if (loadingPath !== undefined && loadingPath === currentPath)
     setLoadingPath(undefined);
+
   if (
-    loadingFeature !== undefined &&
-    (loadingFeature === currentGroupFeature ||
-      loadingFeature === currentProjectFeature)
+    (loadingGroupFeature !== undefined &&
+      loadingGroupFeature === currentGroupFeature) ||
+    (loadingProjectFeature !== undefined &&
+      loadingProjectFeature === currentProjectFeature)
   )
     setLoadingFeature(undefined);
 
