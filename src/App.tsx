@@ -94,6 +94,50 @@ const Alert4: React.FC = () => (
   <CustomAlert color="primary" title="現在のURLのパラメーターを引き継ぎます" />
 );
 
+const useLoadingPath = (currentPath: string | undefined) => {
+  const [loadingPath, setLoadingPath] = useState<string>();
+  const path = loadingPath ?? currentPath;
+
+  if (loadingPath !== undefined && loadingPath === currentPath)
+    setLoadingPath(undefined);
+
+  return { path, loadingPath, setLoadingPath };
+};
+
+const useLoadingFeature = (
+  currentFeature: string | undefined,
+  project: Project | undefined,
+) => {
+  const [loadingFeature, setLoadingFeature] = useState<string>();
+  const feature = loadingFeature ?? currentFeature;
+
+  const currentGroupFeature =
+    currentFeature !== undefined ? findGroupFeature(currentFeature) : undefined;
+
+  const currentProjectFeature =
+    project !== undefined && currentFeature !== undefined
+      ? findProjectFeature(currentFeature, project)
+      : undefined;
+
+  const loadingGroupFeature =
+    loadingFeature !== undefined ? findGroupFeature(loadingFeature) : undefined;
+
+  const loadingProjectFeature =
+    project !== undefined && loadingFeature !== undefined
+      ? findProjectFeature(loadingFeature, project)
+      : undefined;
+
+  if (
+    (loadingGroupFeature !== undefined &&
+      loadingGroupFeature === currentGroupFeature) ||
+    (loadingProjectFeature !== undefined &&
+      loadingProjectFeature === currentProjectFeature)
+  )
+    setLoadingFeature(undefined);
+
+  return { feature, loadingFeature, setLoadingFeature };
+};
+
 const Main: React.FC<{
   options: { token?: string } | undefined;
   url: URL;
@@ -121,11 +165,7 @@ const Main: React.FC<{
     url.pathname,
   );
 
-  const [loadingPath, setLoadingPath] = useState<string>();
-  const [loadingFeature, setLoadingFeature] = useState<string>();
-
-  const path = loadingPath ?? currentPath;
-  const feature = loadingFeature ?? currentFeature;
+  const { path, loadingPath, setLoadingPath } = useLoadingPath(currentPath);
 
   const {
     data: group,
@@ -169,32 +209,10 @@ const Main: React.FC<{
     (project) => project.path_with_namespace === path,
   );
 
-  const currentGroupFeature =
-    currentFeature !== undefined ? findGroupFeature(currentFeature) : undefined;
-
-  const currentProjectFeature =
-    project !== undefined && currentFeature !== undefined
-      ? findProjectFeature(currentFeature, project)
-      : undefined;
-
-  const loadingGroupFeature =
-    loadingFeature !== undefined ? findGroupFeature(loadingFeature) : undefined;
-
-  const loadingProjectFeature =
-    project !== undefined && loadingFeature !== undefined
-      ? findProjectFeature(loadingFeature, project)
-      : undefined;
-
-  if (loadingPath !== undefined && loadingPath === currentPath)
-    setLoadingPath(undefined);
-
-  if (
-    (loadingGroupFeature !== undefined &&
-      loadingGroupFeature === currentGroupFeature) ||
-    (loadingProjectFeature !== undefined &&
-      loadingProjectFeature === currentProjectFeature)
-  )
-    setLoadingFeature(undefined);
+  const { feature, loadingFeature, setLoadingFeature } = useLoadingFeature(
+    currentFeature,
+    project,
+  );
 
   const [selectedTab, setTab] = useState<"groups-and-projects" | "features">(
     "groups-and-projects",
