@@ -2,7 +2,7 @@ import { Button, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
 import React, { useState } from "react";
 import "./App.css";
 import CustomAlert from "./CustomAlert";
-import FeatureList from "./FeatureList";
+import FeatureList, { SkeletonFeatureList } from "./FeatureList";
 import GroupProjectList from "./GroupProjectList";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
 import {
@@ -224,7 +224,8 @@ const Main: React.FC<{
   const [selectedTab, setTab] = useState<"groups-and-projects" | "features">(
     "groups-and-projects",
   );
-  const isFeatureTabEnabled = current !== undefined;
+  const isFeatureTabEnabled =
+    current !== undefined || isGroupLoading || isProjectsLoading;
   const tab = isFeatureTabEnabled ? selectedTab : "groups-and-projects";
 
   return (
@@ -311,7 +312,7 @@ const Main: React.FC<{
           }
           key="features"
         >
-          {current !== undefined && (
+          {current !== undefined ? (
             <FeatureList
               current={current}
               currentFeature={currentFeature}
@@ -322,6 +323,8 @@ const Main: React.FC<{
                 if (autoTabSwitch) setTab("groups-and-projects");
               }}
             />
+          ) : (
+            <SkeletonFeatureList />
           )}
         </Tab>
       </Tabs>

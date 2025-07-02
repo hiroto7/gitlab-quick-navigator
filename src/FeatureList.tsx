@@ -1,4 +1,10 @@
-import { Listbox, ListboxItem, ListboxSection, Spinner } from "@heroui/react";
+import {
+  Listbox,
+  ListboxItem,
+  ListboxSection,
+  Skeleton,
+  Spinner,
+} from "@heroui/react";
 import React from "react";
 import {
   findGroupFeature,
@@ -289,3 +295,17 @@ const FeatureList: React.FC<{
 };
 
 export default FeatureList;
+
+export const SkeletonFeatureList: React.FC = () => {
+  const keys = Array.from({ length: 5 }).map((_, index) => index.toString());
+
+  return (
+    <Listbox disabledKeys={keys}>
+      {keys.map((key) => (
+        <ListboxItem key={key} textValue="Loading...">
+          <Skeleton className="h-5 w-full" />
+        </ListboxItem>
+      ))}
+    </Listbox>
+  );
+};
