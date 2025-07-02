@@ -207,106 +207,85 @@ const PROJECT_FEATURE_LIST: readonly ProjectFeatureListSection<ProjectFeature>[]
     },
   ];
 
-const FeatureList = ({
-  base,
-  list,
-  currentFeature,
-  loadingFeature,
-  search,
-  onNavigate,
-}: {
-  base: string;
-  list: readonly ProjectFeatureListSection<string>[];
+const FeatureList: React.FC<{
+  current: { type: "group"; item: Group } | { type: "project"; item: Project };
   currentFeature: string | undefined;
   loadingFeature: string | undefined;
   search: string;
   onNavigate: (feature: string) => void;
-}): React.ReactNode => (
-  <Listbox
-    selectionMode="single"
-    selectedKeys={currentFeature !== undefined ? [currentFeature] : []}
-  >
-    {list.map(({ title, items }) => (
-      <ListboxSection key={title} title={title} showDivider>
-        {items.map(({ feature, label }) => {
-          const href = generateHref(base, feature, search);
+}> = ({ current, currentFeature, loadingFeature, search, onNavigate }) => {
+  const render = (
+    list: readonly ProjectFeatureListSection<string>[],
+    currentFeature: string | undefined,
+  ) => (
+    <Listbox
+      selectionMode="single"
+      selectedKeys={currentFeature !== undefined ? [currentFeature] : []}
+    >
+      {list
+        .filter(({ items }) => items.length > 0)
+        .map(({ title, items }) => (
+          <ListboxSection key={title} title={title} showDivider>
+            {items.map(({ feature, label }) => {
+              const href = generateHref(current.item.web_url, feature, search);
 
-          return (
-            <ListboxItem
-              key={feature}
-              href={href}
-              endContent={
-                loadingFeature === feature ? (
-                  <Spinner size="sm" variant="gradient" />
-                ) : undefined
-              }
-              onPress={() => {
-                onNavigate(feature);
-                void updateTabUrl(href);
-              }}
-            >
-              {label}
-            </ListboxItem>
-          );
-        })}
-      </ListboxSection>
-    ))}
-  </Listbox>
-);
-
-export const GroupFeatureList: React.FC<{
-  group: Group;
-  currentFeature: string | undefined;
-  loadingFeature: string | undefined;
-  search: string;
-  onNavigate: (feature: string) => void;
-}> = ({ group, currentFeature, loadingFeature, search, onNavigate }) => {
-  const groupFeature =
-    currentFeature !== undefined ? findGroupFeature(currentFeature) : undefined;
-
-  return (
-    <FeatureList
-      base={group.web_url}
-      list={GROUP_FEATURE_LIST}
-      currentFeature={groupFeature}
-      loadingFeature={loadingFeature}
-      search={search}
-      onNavigate={onNavigate}
-    />
+              return (
+                <ListboxItem
+                  key={feature}
+                  href={href}
+                  endContent={
+                    loadingFeature === feature ? (
+                      <Spinner size="sm" variant="gradient" />
+                    ) : undefined
+                  }
+                  onPress={() => {
+                    onNavigate(feature);
+                    void updateTabUrl(href);
+                  }}
+                >
+                  {label}
+                </ListboxItem>
+              );
+            })}
+          </ListboxSection>
+        ))}
+    </Listbox>
   );
+
+  switch (current.type) {
+    case "group": {
+      const groupFeature =
+        currentFeature !== undefined
+          ? findGroupFeature(currentFeature)
+          : undefined;
+
+      return render(GROUP_FEATURE_LIST, groupFeature);
+    }
+
+    case "project": {
+      const project = current.item;
+      const projectFeatureList = PROJECT_FEATURE_LIST.map(
+        ({ title, items }) => ({
+          title,
+          items: items
+            .filter(
+              ({ feature }) =>
+                isProjectFeatureAvailable[feature]?.(project) ?? true,
+            )
+            .map(({ feature, label }) => ({
+              feature: getProjectFeaturePath(feature, project.default_branch),
+              label,
+            })),
+        }),
+      );
+      const projectFeature =
+        currentFeature !== undefined
+          ? findProjectFeature(currentFeature, project)
+          : undefined;
+
+      return render(projectFeatureList, projectFeature);
+    }
+  }
 };
 
-export const ProjectFeatureList: React.FC<{
-  project: Project;
-  currentFeature: string | undefined;
-  loadingFeature: string | undefined;
-  search: string;
-  onNavigate: (feature: string) => void;
-}> = ({ project, currentFeature, loadingFeature, search, onNavigate }) => {
-  const projectFeature =
-    currentFeature !== undefined
-      ? findProjectFeature(currentFeature, project)
-      : undefined;
-
-  return (
-    <FeatureList
-      base={project.web_url}
-      list={PROJECT_FEATURE_LIST.map(({ title, items }) => ({
-        title,
-        items: items
-          .filter(
-            ({ feature }) =>
-              isProjectFeatureAvailable[feature]?.(project) ?? true,
-          )
-          .map(({ feature, label }) => ({
-            feature: getProjectFeaturePath(feature, project.default_branch),
-            label,
-          })),
-      })).filter(({ items }) => items.length > 0)}
-      currentFeature={projectFeature}
-      loadingFeature={loadingFeature}
-      search={search}
-      onNavigate={onNavigate}
-    />
-  );
-};
+export default FeatureList;

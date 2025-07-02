@@ -2,7 +2,7 @@ import { Button, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
 import React, { useState } from "react";
 import "./App.css";
 import CustomAlert from "./CustomAlert";
-import { GroupFeatureList, ProjectFeatureList } from "./FeatureList";
+import FeatureList from "./FeatureList";
 import GroupProjectList from "./GroupProjectList";
 import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
 import {
@@ -106,7 +106,10 @@ const useLoadingPath = (currentPath: string | undefined) => {
 
 const useLoadingFeature = (
   currentFeature: string | undefined,
-  project: Project | undefined,
+  current:
+    | { type: "group"; item: Group }
+    | { type: "project"; item: Project }
+    | undefined,
 ) => {
   const [loadingFeature, setLoadingFeature] = useState<string>();
   const feature = loadingFeature ?? currentFeature;
@@ -115,16 +118,16 @@ const useLoadingFeature = (
     currentFeature !== undefined ? findGroupFeature(currentFeature) : undefined;
 
   const currentProjectFeature =
-    project !== undefined && currentFeature !== undefined
-      ? findProjectFeature(currentFeature, project)
+    current?.type === "project" && currentFeature !== undefined
+      ? findProjectFeature(currentFeature, current.item)
       : undefined;
 
   const loadingGroupFeature =
     loadingFeature !== undefined ? findGroupFeature(loadingFeature) : undefined;
 
   const loadingProjectFeature =
-    project !== undefined && loadingFeature !== undefined
-      ? findProjectFeature(loadingFeature, project)
+    current?.type === "project" && loadingFeature !== undefined
+      ? findProjectFeature(loadingFeature, current.item)
       : undefined;
 
   if (
@@ -205,20 +208,23 @@ const Main: React.FC<{
       ),
   );
 
-  const project = projects?.find(
-    (project) => project.path_with_namespace === path,
-  );
+  const current =
+    [...starredProjects, ...(projects ?? [])]
+      .map((project) => ({ item: project, type: "project" }) as const)
+      .find(({ item }) => item.path_with_namespace === path) ??
+    [...starredGroups, ...(group !== undefined ? [group] : [])]
+      .map((group) => ({ item: group, type: "group" }) as const)
+      .find(({ item }) => item.full_path === path);
 
   const { feature, loadingFeature, setLoadingFeature } = useLoadingFeature(
     currentFeature,
-    project,
+    current,
   );
 
   const [selectedTab, setTab] = useState<"groups-and-projects" | "features">(
     "groups-and-projects",
   );
-  const isFeatureTabEnabled =
-    (group !== undefined && group.full_path === path) || project !== undefined;
+  const isFeatureTabEnabled = current !== undefined;
   const tab = isFeatureTabEnabled ? selectedTab : "groups-and-projects";
 
   return (
@@ -305,21 +311,9 @@ const Main: React.FC<{
           }
           key="features"
         >
-          {group !== undefined && group.full_path === path && (
-            <GroupFeatureList
-              group={group}
-              currentFeature={currentFeature}
-              loadingFeature={loadingFeature}
-              search={url.search}
-              onNavigate={(nextFeature) => {
-                setLoadingFeature(nextFeature);
-                if (autoTabSwitch) setTab("groups-and-projects");
-              }}
-            />
-          )}
-          {project !== undefined && (
-            <ProjectFeatureList
-              project={project}
+          {current !== undefined && (
+            <FeatureList
+              current={current}
               currentFeature={currentFeature}
               loadingFeature={loadingFeature}
               search={url.search}
