@@ -305,7 +305,9 @@ const GroupProjectList: React.FC<{
                     project.default_branch,
                   ),
                   featureName:
-                    projectFeature === "issues" && project.open_issues_count > 0
+                    projectFeature === "issues" &&
+                    project.open_issues_count !== undefined &&
+                    project.open_issues_count > 0
                       ? `Issues (${project.open_issues_count.toLocaleString()})`
                       : getFeatureName(projectFeature, PROJECT_FEATURE_NAMES),
                 }
