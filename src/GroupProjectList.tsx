@@ -17,30 +17,29 @@ import {
   PROJECT_FEATURE_NAMES,
   Project,
   ProjectFeature,
-  findGroupFeature,
-  findProjectFeature,
   generateHref,
   getFeatureName,
   getProjectFeaturePath,
   isProjectFeatureAvailable,
-  updateTabUrl,
 } from "./lib";
 
 const GroupProjectList: React.FC<{
   path: string | undefined;
-  feature: string | undefined;
+  groupFeature: GroupFeature | undefined;
+  projectFeature: ProjectFeature | undefined;
   search: string;
   starredGroups: readonly Group[];
   starredProjects: readonly Project[];
   currentGroup: Group | "loading" | undefined;
   currentGroupProjects: readonly Project[] | "loading" | undefined;
   loadingPath: string | undefined;
-  onNavigate: (path: string) => void;
+  onNavigate: (url: string) => void;
   onStarredGroupsUpdate: (groups: readonly Group[]) => void;
   onStarredProjectsUpdate: (projects: readonly Project[]) => void;
 }> = ({
   path,
-  feature,
+  groupFeature,
+  projectFeature,
   search,
   starredGroups: currentStarredGroups,
   starredProjects: currentStarredProjects,
@@ -76,7 +75,6 @@ const GroupProjectList: React.FC<{
       featureName,
       starred,
       isLoading,
-      onPress,
       onStar,
       onDragStart,
       onDragEnd,
@@ -91,7 +89,6 @@ const GroupProjectList: React.FC<{
       featureName: string | undefined;
       starred: boolean;
       isLoading: boolean;
-      onPress: () => void;
       onStar: (starred: boolean) => void;
       onDragStart: () => void;
       onDragEnd: () => void;
@@ -104,10 +101,7 @@ const GroupProjectList: React.FC<{
         <ListboxItem
           key={key}
           href={href}
-          onPress={() => {
-            onPress();
-            void updateTabUrl(href);
-          }}
+          onPress={() => onNavigate(href)}
           description={featureName}
           startContent={
             <Avatar
@@ -155,13 +149,8 @@ const GroupProjectList: React.FC<{
         </ListboxItem>
       );
     },
-    [search],
+    [onNavigate, search],
   );
-
-  const groupFeature: GroupFeature | undefined =
-    feature !== undefined ? findGroupFeature(feature) : undefined;
-  const projectFeature: ProjectFeature | undefined =
-    feature !== undefined ? findProjectFeature(feature) : undefined;
 
   const allKeys = [
     ...[...starredGroups, ...(typeof group === "object" ? [group] : [])].map(
@@ -265,9 +254,6 @@ const GroupProjectList: React.FC<{
                 : undefined,
             starred: starred,
             isLoading: loadingPath === group.full_path,
-            onPress: () => {
-              onNavigate(group.full_path);
-            },
             onStar: (starred) =>
               onStarredGroupsUpdate(
                 starred
@@ -322,9 +308,6 @@ const GroupProjectList: React.FC<{
             featureName,
             starred: starred,
             isLoading: loadingPath === project.path_with_namespace,
-            onPress: () => {
-              onNavigate(project.path_with_namespace);
-            },
             onStar: (starred) =>
               onStarredProjectsUpdate(
                 starred

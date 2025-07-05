@@ -4,15 +4,13 @@ import "./App.css";
 import CustomAlert from "./CustomAlert";
 import FeatureList, { SkeletonFeatureList } from "./FeatureList";
 import GroupProjectList from "./GroupProjectList";
-import { useChromeStorage, useClosestGroup, useCurrentUrl } from "./hooks";
 import {
-  findGroupFeature,
-  findProjectFeature,
-  Group,
-  parsePathname,
-  Project,
-  StoredData,
-} from "./lib";
+  useChromeStorage,
+  useClosestGroup,
+  useCurrentUrl,
+  useLoadingUrl,
+} from "./hooks";
+import { findFeatures, Group, parsePathname, Project, StoredData } from "./lib";
 
 const groupDetailEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
@@ -104,67 +102,45 @@ const TabTitle: React.FC<{ children: string; isLoading: boolean }> = ({
   </div>
 );
 
-const useLoadingPath = (currentPath: string | undefined) => {
-  const [loadingPath, setLoadingPath] = useState<string>();
-  const path = loadingPath ?? currentPath;
+const parseLoadingPathname = ({
+  loadingPathname,
+  currentPath,
+  currentGroupFeature,
+  currentProjectFeature,
+}: {
+  loadingPathname: string;
+  currentPath: string | undefined;
+  currentGroupFeature: string | undefined;
+  currentProjectFeature: string | undefined;
+}) => {
+  const { path, feature } = parsePathname(loadingPathname);
 
-  if (loadingPath !== undefined && loadingPath === currentPath)
-    setLoadingPath(undefined);
+  const { group: groupFeature, project: projectFeature } =
+    feature !== undefined ? findFeatures(feature) : {};
 
-  return { path, loadingPath, setLoadingPath };
-};
-
-const useLoadingFeature = (
-  currentFeature: string | undefined,
-  current:
-    | { type: "group"; item: Group }
-    | { type: "project"; item: Project }
-    | undefined,
-) => {
-  const [loadingFeature, setLoadingFeature] = useState<string>();
-  const feature = loadingFeature ?? currentFeature;
-
-  const currentGroupFeature =
-    currentFeature !== undefined ? findGroupFeature(currentFeature) : undefined;
-
-  const currentProjectFeature =
-    current?.type === "project" && currentFeature !== undefined
-      ? findProjectFeature(currentFeature, current.item)
-      : undefined;
-
+  const loadingPath = path !== currentPath ? path : undefined;
   const loadingGroupFeature =
-    loadingFeature !== undefined ? findGroupFeature(loadingFeature) : undefined;
-
+    groupFeature !== currentGroupFeature ? groupFeature : undefined;
   const loadingProjectFeature =
-    current?.type === "project" && loadingFeature !== undefined
-      ? findProjectFeature(loadingFeature, current.item)
-      : undefined;
+    projectFeature !== currentProjectFeature ? projectFeature : undefined;
 
-  if (
-    (loadingGroupFeature !== undefined &&
-      loadingGroupFeature === currentGroupFeature) ||
-    (loadingProjectFeature !== undefined &&
-      loadingProjectFeature === currentProjectFeature)
-  )
-    setLoadingFeature(undefined);
-
-  return { feature, loadingFeature, setLoadingFeature };
+  return { loadingPath, loadingGroupFeature, loadingProjectFeature };
 };
 
 const Main: React.FC<{
-  options: { token?: string } | undefined;
+  origins: Record<string, { token?: string }>;
   url: URL;
   starredGroups: readonly Group[];
   starredProjects: readonly Project[];
   autoTabSwitch: boolean;
-  onEnable: () => void;
-  onSetToken: (token: string) => void;
-  onDeleteToken: () => void;
+  onEnable: (origin: string) => void;
+  onSetToken: (origin: string, token: string) => void;
+  onDeleteToken: (origin: string) => void;
   onStarredGroupsUpdate: (groups: readonly Group[]) => void;
   onStarredProjectsUpdate: (projects: readonly Project[]) => void;
 }> = ({
-  options,
-  url,
+  origins,
+  url: currentUrl,
   starredGroups,
   starredProjects,
   autoTabSwitch,
@@ -175,10 +151,30 @@ const Main: React.FC<{
   onStarredProjectsUpdate,
 }) => {
   const { path: currentPath, feature: currentFeature } = parsePathname(
-    url.pathname,
+    currentUrl.pathname,
   );
 
-  const { path, loadingPath, setLoadingPath } = useLoadingPath(currentPath);
+  const { loadingUrl, navigate } = useLoadingUrl(currentUrl);
+  const url = loadingUrl ?? currentUrl;
+
+  const options = origins[url.origin];
+
+  const { group: currentGroupFeature, project: currentProjectFeature } =
+    currentFeature !== undefined ? findFeatures(currentFeature) : {};
+
+  const { loadingPath, loadingGroupFeature, loadingProjectFeature } =
+    loadingUrl !== undefined
+      ? parseLoadingPathname({
+          loadingPathname: loadingUrl.pathname,
+          currentPath,
+          currentGroupFeature,
+          currentProjectFeature,
+        })
+      : {};
+
+  const path = loadingPath ?? currentPath;
+  const groupFeature = loadingGroupFeature ?? currentGroupFeature;
+  const projectFeature = loadingProjectFeature ?? currentProjectFeature;
 
   const {
     data: group,
@@ -226,11 +222,6 @@ const Main: React.FC<{
       .map((group) => ({ item: group, type: "group" }) as const)
       .find(({ item }) => item.full_path === path);
 
-  const { feature, loadingFeature, setLoadingFeature } = useLoadingFeature(
-    currentFeature,
-    current,
-  );
-
   const [selectedTab, setTab] = useState<"groups-and-projects" | "features">(
     "groups-and-projects",
   );
@@ -252,7 +243,7 @@ const Main: React.FC<{
       />
       {options === undefined ? (
         <div className="m-2">
-          <Alert1 host={url.host} onEnable={onEnable} />
+          <Alert1 host={url.host} onEnable={() => onEnable(url.origin)} />
         </div>
       ) : path === undefined ? (
         <div className="m-2">
@@ -262,8 +253,8 @@ const Main: React.FC<{
         <div className="m-2">
           <Alert3
             origin={url.origin}
-            onSetToken={onSetToken}
-            onDeleteToken={onDeleteToken}
+            onSetToken={(token) => onSetToken(url.origin, token)}
+            onDeleteToken={() => onDeleteToken(url.origin)}
           />
         </div>
       ) : url.search !== "" ? (
@@ -297,11 +288,12 @@ const Main: React.FC<{
             currentGroup={!isGroupLoading ? group : "loading"}
             currentGroupProjects={!isProjectsLoading ? projects : "loading"}
             path={currentPath}
-            feature={feature}
+            groupFeature={groupFeature}
+            projectFeature={projectFeature}
             search={url.search}
             loadingPath={loadingPath}
-            onNavigate={(nextPath) => {
-              setLoadingPath(nextPath);
+            onNavigate={(url) => {
+              navigate(url);
               if (autoTabSwitch) setTab("features");
             }}
             onStarredGroupsUpdate={onStarredGroupsUpdate}
@@ -310,7 +302,12 @@ const Main: React.FC<{
         </Tab>
         <Tab
           title={
-            <TabTitle isLoading={loadingFeature !== undefined}>
+            <TabTitle
+              isLoading={
+                loadingGroupFeature !== undefined ||
+                loadingProjectFeature !== undefined
+              }
+            >
               Features
             </TabTitle>
           }
@@ -319,11 +316,13 @@ const Main: React.FC<{
           {groupOrProject !== undefined ? (
             <FeatureList
               groupOrProject={groupOrProject}
-              currentFeature={currentFeature}
-              loadingFeature={loadingFeature}
+              currentGroupFeature={currentGroupFeature}
+              currentProjectFeature={currentProjectFeature}
+              loadingGroupFeature={loadingGroupFeature}
+              loadingProjectFeature={loadingProjectFeature}
               search={url.search}
-              onNavigate={(nextFeature) => {
-                setLoadingFeature(nextFeature);
+              onNavigate={(url) => {
+                navigate(url);
                 if (autoTabSwitch) setTab("groups-and-projects");
               }}
             />
@@ -346,7 +345,7 @@ const App: React.FC = () => {
   if (url === undefined || storedData === undefined) return;
 
   const {
-    origins,
+    origins = {},
     groups = [],
     projects = [],
     autoTabSwitch = false,
@@ -355,16 +354,16 @@ const App: React.FC = () => {
   return (
     <Main
       url={url}
-      options={origins?.[url.origin]}
+      origins={origins}
       starredGroups={groups}
       starredProjects={projects}
       autoTabSwitch={autoTabSwitch}
-      onEnable={() => void set({ origins: { ...origins, [url.origin]: {} } })}
-      onSetToken={(token) =>
-        void set({ origins: { ...origins, [url.origin]: { token } } })
+      onEnable={(origin) => void set({ origins: { ...origins, [origin]: {} } })}
+      onSetToken={(origin, token) =>
+        void set({ origins: { ...origins, [origin]: { token } } })
       }
-      onDeleteToken={() =>
-        void set({ origins: { ...origins, [url.origin]: {} } })
+      onDeleteToken={(origin) =>
+        void set({ origins: { ...origins, [origin]: {} } })
       }
       onStarredGroupsUpdate={(groups) => void set({ groups })}
       onStarredProjectsUpdate={(projects) => void set({ projects })}
