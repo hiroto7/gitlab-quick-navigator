@@ -467,17 +467,22 @@ const SIMILAR_FEATURE_PAIRS: readonly {
   { group: "issues_analytics", project: "analytics/issues_analytics" },
 ];
 
-export const findGroupFeature = (feature: string) =>
+const findGroupFeature = (feature: string) =>
   SIMILAR_FEATURE_PAIRS.find(({ project }) => feature.startsWith(project))
     ?.group ??
   GROUP_FEATURES.findLast((groupFeature) => feature.startsWith(groupFeature));
 
-export const findProjectFeature = (feature: string) =>
+const findProjectFeature = (feature: string) =>
   SIMILAR_FEATURE_PAIRS.find(({ group }) => feature.startsWith(group))
     ?.project ??
   PROJECT_FEATURES.findLast((projectFeature) =>
     feature.startsWith(projectFeature),
   );
+
+export const findFeatures = (feature: string) => ({
+  group: findGroupFeature(feature),
+  project: findProjectFeature(feature),
+});
 
 export const generateHref = (
   base: string,
@@ -487,8 +492,6 @@ export const generateHref = (
   if (feature === undefined) return base;
   else return `${base}/-/${feature}${search}`;
 };
-
-export const updateTabUrl = (url: string) => chrome.tabs.update({ url });
 
 export interface StoredData {
   origins?: Record<string, { token?: string }>;

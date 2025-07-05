@@ -7,8 +7,6 @@ import {
 } from "@heroui/react";
 import React from "react";
 import {
-  findGroupFeature,
-  findProjectFeature,
   generateHref,
   getProjectFeaturePath,
   Group,
@@ -16,7 +14,6 @@ import {
   isProjectFeatureAvailable,
   Project,
   ProjectFeature,
-  updateTabUrl,
 } from "./lib";
 
 interface FeatureListItem<F extends string> {
@@ -227,14 +224,18 @@ const FeatureList: React.FC<{
   groupOrProject:
     | { type: "group"; item: Group }
     | { type: "project"; item: Project };
-  currentFeature: string | undefined;
-  loadingFeature: string | undefined;
+  currentGroupFeature: GroupFeature | undefined;
+  currentProjectFeature: ProjectFeature | undefined;
+  loadingGroupFeature: GroupFeature | undefined;
+  loadingProjectFeature: ProjectFeature | undefined;
   search: string;
-  onNavigate: (feature: string) => void;
+  onNavigate: (url: string) => void;
 }> = ({
   groupOrProject,
-  currentFeature,
-  loadingFeature,
+  currentGroupFeature,
+  currentProjectFeature,
+  loadingGroupFeature,
+  loadingProjectFeature,
   search,
   onNavigate,
 }) => {
@@ -267,10 +268,7 @@ const FeatureList: React.FC<{
                       <Spinner size="sm" variant="gradient" />
                     ) : undefined
                   }
-                  onPress={() => {
-                    onNavigate(feature);
-                    void updateTabUrl(href);
-                  }}
+                  onPress={() => onNavigate(href)}
                 >
                   {label}
                 </ListboxItem>
@@ -283,27 +281,16 @@ const FeatureList: React.FC<{
 
   switch (groupOrProject.type) {
     case "group": {
-      const currentGroupFeature =
-        currentFeature !== undefined
-          ? findGroupFeature(currentFeature)
-          : undefined;
-      const loadingGroupFeature =
-        loadingFeature !== undefined
-          ? findGroupFeature(loadingFeature)
-          : undefined;
-
-      return render(
-        GROUP_FEATURE_LIST.map(({ title, items }) => ({
-          title,
-          items: items.map(({ feature, label }) => ({
-            feature,
-            label,
-            path: feature,
-          })),
+      const groupFeatureList = GROUP_FEATURE_LIST.map(({ title, items }) => ({
+        title,
+        items: items.map(({ feature, label }) => ({
+          feature,
+          label,
+          path: feature,
         })),
-        currentGroupFeature,
-        loadingGroupFeature,
-      );
+      }));
+
+      return render(groupFeatureList, currentGroupFeature, loadingGroupFeature);
     }
 
     case "project": {
@@ -323,14 +310,6 @@ const FeatureList: React.FC<{
             })),
         }),
       );
-      const currentProjectFeature =
-        currentFeature !== undefined
-          ? findProjectFeature(currentFeature)
-          : undefined;
-      const loadingProjectFeature =
-        loadingFeature !== undefined
-          ? findProjectFeature(loadingFeature)
-          : undefined;
 
       return render(
         projectFeatureList,
