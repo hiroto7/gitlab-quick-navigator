@@ -94,6 +94,16 @@ const Alert4: React.FC = () => (
   <CustomAlert color="primary" title="現在のURLのパラメーターを引き継ぎます" />
 );
 
+const TabTitle: React.FC<{ children: string; isLoading: boolean }> = ({
+  children,
+  isLoading: loading,
+}) => (
+  <div className="flex items-center gap-2">
+    <span>{children}</span>
+    {loading && <Spinner size="sm" variant="gradient" />}
+  </div>
+);
+
 const useLoadingPath = (currentPath: string | undefined) => {
   const [loadingPath, setLoadingPath] = useState<string>();
   const path = loadingPath ?? currentPath;
@@ -275,12 +285,9 @@ const Main: React.FC<{
       >
         <Tab
           title={
-            <div className="flex items-center gap-2">
-              <span>Groups & Projects</span>
-              {loadingPath !== undefined && (
-                <Spinner size="sm" variant="gradient" />
-              )}
-            </div>
+            <TabTitle isLoading={loadingPath !== undefined}>
+              Groups & Projects
+            </TabTitle>
           }
           key="groups-and-projects"
         >
@@ -303,12 +310,9 @@ const Main: React.FC<{
         </Tab>
         <Tab
           title={
-            <div className="flex items-center gap-2">
-              <span>Features</span>
-              {loadingFeature !== undefined && (
-                <Spinner size="sm" variant="gradient" />
-              )}
-            </div>
+            <TabTitle isLoading={loadingFeature !== undefined}>
+              Features
+            </TabTitle>
           }
           key="features"
         >
