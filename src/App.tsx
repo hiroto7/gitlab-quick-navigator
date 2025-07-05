@@ -218,7 +218,7 @@ const Main: React.FC<{
       ),
   );
 
-  const current =
+  const groupOrProject =
     [...starredProjects, ...(projects ?? [])]
       .map((project) => ({ item: project, type: "project" }) as const)
       .find(({ item }) => item.path_with_namespace === path) ??
@@ -235,7 +235,7 @@ const Main: React.FC<{
     "groups-and-projects",
   );
   const isFeatureTabEnabled =
-    current !== undefined || isGroupLoading || isProjectsLoading;
+    groupOrProject !== undefined || isGroupLoading || isProjectsLoading;
   const tab = isFeatureTabEnabled ? selectedTab : "groups-and-projects";
 
   return (
@@ -316,9 +316,9 @@ const Main: React.FC<{
           }
           key="features"
         >
-          {current !== undefined ? (
+          {groupOrProject !== undefined ? (
             <FeatureList
-              current={current}
+              groupOrProject={groupOrProject}
               currentFeature={currentFeature}
               loadingFeature={loadingFeature}
               search={url.search}

@@ -19,15 +19,27 @@ import {
   updateTabUrl,
 } from "./lib";
 
-interface ProjectFeatureListSection<F extends string> {
-  title: string;
-  items: readonly {
-    label: string;
-    feature: F;
-  }[];
+interface FeatureListItem<F extends GroupFeature | ProjectFeature> {
+  label: string;
+  feature: F;
 }
 
-const GROUP_FEATURE_LIST: readonly ProjectFeatureListSection<GroupFeature>[] = [
+interface FeatureListSection<F extends GroupFeature | ProjectFeature> {
+  title: string;
+  items: readonly FeatureListItem<F>[];
+}
+
+interface FeatureListItemWithPath<F extends GroupFeature | ProjectFeature>
+  extends FeatureListItem<F> {
+  path: string;
+}
+
+interface FeatureListSectionWithPath<F extends GroupFeature | ProjectFeature>
+  extends FeatureListSection<F> {
+  items: readonly FeatureListItemWithPath<F>[];
+}
+
+const GROUP_FEATURE_LIST: readonly FeatureListSection<GroupFeature>[] = [
   {
     title: "Manage",
     items: [
@@ -100,129 +112,137 @@ const GROUP_FEATURE_LIST: readonly ProjectFeatureListSection<GroupFeature>[] = [
   },
 ];
 
-const PROJECT_FEATURE_LIST: readonly ProjectFeatureListSection<ProjectFeature>[] =
-  [
-    {
-      title: "Manage",
-      items: [
-        { label: "Members", feature: "project_members" },
-        { label: "Labels", feature: "labels" },
-      ],
-    },
-    {
-      title: "Plan",
-      items: [
-        { label: "Issues", feature: "issues" },
-        { label: "Issue boards", feature: "boards" },
-        { label: "Milestones", feature: "milestones" },
-        { label: "Iterations", feature: "cadences" },
-        { label: "Wiki", feature: "wikis" },
-        {
-          label: "Requirements",
-          feature: "requirements_management/requirements",
-        },
-      ],
-    },
-    {
-      title: "Code",
-      items: [
-        { label: "Merge requests", feature: "merge_requests" },
-        { label: "Repository", feature: "tree" },
-        { label: "Branches", feature: "branches" },
-        { label: "Commits", feature: "commits" },
-        { label: "Tags", feature: "tags" },
-        { label: "Repository graph", feature: "network" },
-        { label: "Compare revisions", feature: "compare" },
-        { label: "Snippets", feature: "snippets" },
-      ],
-    },
-    {
-      title: "Build",
-      items: [
-        { label: "Pipelines", feature: "pipelines" },
-        { label: "Jobs", feature: "jobs" },
-        { label: "Pipeline editor", feature: "ci/editor" },
-        { label: "Pipeline schedules", feature: "pipeline_schedules" },
-        { label: "Test cases", feature: "quality/test_cases" },
-        { label: "Artifacts", feature: "artifacts" },
-      ],
-    },
-    {
-      title: "Secure",
-      items: [
-        { label: "Security capabilities", feature: "security/discover" },
-        { label: "Audit events", feature: "audit_events" },
-        { label: "Security configuration", feature: "security/configuration" },
-      ],
-    },
-    {
-      title: "Deploy",
-      items: [
-        { label: "Releases", feature: "releases" },
-        { label: "Feature flags", feature: "feature_flags" },
-        { label: "Package registry", feature: "packages" },
-        { label: "Model registry", feature: "ml/models" },
-      ],
-    },
-    {
-      title: "Operate",
-      items: [
-        { label: "Environments", feature: "environments" },
-        { label: "Kubernetes clusters", feature: "clusters" },
-        { label: "Terraform states", feature: "terraform" },
-        { label: "Terraform modules", feature: "terraform_module_registry" },
-        { label: "Google Cloud", feature: "google_cloud/configuration" },
-      ],
-    },
-    {
-      title: "Monitor",
-      items: [
-        { label: "Error Tracking", feature: "error_tracking" },
-        { label: "Alerts", feature: "alert_management" },
-        { label: "Incidents", feature: "incidents" },
-        { label: "Service Desk", feature: "issues/service_desk" },
-      ],
-    },
-    {
-      title: "Analyze",
-      items: [
-        { label: "Value stream analytics", feature: "value_stream_analytics" },
-        { label: "Contributor analytics", feature: "graphs" },
-        { label: "CI/CD analytics", feature: "pipelines/charts" },
-        { label: "Code review analytics", feature: "analytics/code_reviews" },
-        { label: "Issue analytics", feature: "analytics/issues_analytics" },
-        { label: "Model experiments", feature: "ml/experiments" },
-      ],
-    },
-    {
-      title: "Settings",
-      items: [
-        { label: "Integrations", feature: "settings/integrations" },
-        { label: "Webhooks", feature: "hooks" },
-        { label: "Access tokens", feature: "settings/access_tokens" },
-        { label: "Repository", feature: "settings/repository" },
-        { label: "Merge requests", feature: "settings/merge_requests" },
-        { label: "CI/CD", feature: "settings/ci_cd" },
-        {
-          label: "Packages and registries",
-          feature: "settings/packages_and_registries",
-        },
-        { label: "Monitor", feature: "settings/operations" },
-        { label: "Usage Quotas", feature: "usage_quotas" },
-      ],
-    },
-  ];
+const PROJECT_FEATURE_LIST: readonly FeatureListSection<ProjectFeature>[] = [
+  {
+    title: "Manage",
+    items: [
+      { label: "Members", feature: "project_members" },
+      { label: "Labels", feature: "labels" },
+    ],
+  },
+  {
+    title: "Plan",
+    items: [
+      { label: "Issues", feature: "issues" },
+      { label: "Issue boards", feature: "boards" },
+      { label: "Milestones", feature: "milestones" },
+      { label: "Iterations", feature: "cadences" },
+      { label: "Wiki", feature: "wikis" },
+      {
+        label: "Requirements",
+        feature: "requirements_management/requirements",
+      },
+    ],
+  },
+  {
+    title: "Code",
+    items: [
+      { label: "Merge requests", feature: "merge_requests" },
+      { label: "Repository", feature: "tree" },
+      { label: "Branches", feature: "branches" },
+      { label: "Commits", feature: "commits" },
+      { label: "Tags", feature: "tags" },
+      { label: "Repository graph", feature: "network" },
+      { label: "Compare revisions", feature: "compare" },
+      { label: "Snippets", feature: "snippets" },
+    ],
+  },
+  {
+    title: "Build",
+    items: [
+      { label: "Pipelines", feature: "pipelines" },
+      { label: "Jobs", feature: "jobs" },
+      { label: "Pipeline editor", feature: "ci/editor" },
+      { label: "Pipeline schedules", feature: "pipeline_schedules" },
+      { label: "Test cases", feature: "quality/test_cases" },
+      { label: "Artifacts", feature: "artifacts" },
+    ],
+  },
+  {
+    title: "Secure",
+    items: [
+      { label: "Security capabilities", feature: "security/discover" },
+      { label: "Audit events", feature: "audit_events" },
+      { label: "Security configuration", feature: "security/configuration" },
+    ],
+  },
+  {
+    title: "Deploy",
+    items: [
+      { label: "Releases", feature: "releases" },
+      { label: "Feature flags", feature: "feature_flags" },
+      { label: "Package registry", feature: "packages" },
+      { label: "Model registry", feature: "ml/models" },
+    ],
+  },
+  {
+    title: "Operate",
+    items: [
+      { label: "Environments", feature: "environments" },
+      { label: "Kubernetes clusters", feature: "clusters" },
+      { label: "Terraform states", feature: "terraform" },
+      { label: "Terraform modules", feature: "terraform_module_registry" },
+      { label: "Google Cloud", feature: "google_cloud/configuration" },
+    ],
+  },
+  {
+    title: "Monitor",
+    items: [
+      { label: "Error Tracking", feature: "error_tracking" },
+      { label: "Alerts", feature: "alert_management" },
+      { label: "Incidents", feature: "incidents" },
+      { label: "Service Desk", feature: "issues/service_desk" },
+    ],
+  },
+  {
+    title: "Analyze",
+    items: [
+      { label: "Value stream analytics", feature: "value_stream_analytics" },
+      { label: "Contributor analytics", feature: "graphs" },
+      { label: "CI/CD analytics", feature: "pipelines/charts" },
+      { label: "Code review analytics", feature: "analytics/code_reviews" },
+      { label: "Issue analytics", feature: "analytics/issues_analytics" },
+      { label: "Model experiments", feature: "ml/experiments" },
+    ],
+  },
+  {
+    title: "Settings",
+    items: [
+      { label: "Integrations", feature: "settings/integrations" },
+      { label: "Webhooks", feature: "hooks" },
+      { label: "Access tokens", feature: "settings/access_tokens" },
+      { label: "Repository", feature: "settings/repository" },
+      { label: "Merge requests", feature: "settings/merge_requests" },
+      { label: "CI/CD", feature: "settings/ci_cd" },
+      {
+        label: "Packages and registries",
+        feature: "settings/packages_and_registries",
+      },
+      { label: "Monitor", feature: "settings/operations" },
+      { label: "Usage Quotas", feature: "usage_quotas" },
+    ],
+  },
+];
 
 const FeatureList: React.FC<{
-  current: { type: "group"; item: Group } | { type: "project"; item: Project };
+  groupOrProject:
+    | { type: "group"; item: Group }
+    | { type: "project"; item: Project };
   currentFeature: string | undefined;
   loadingFeature: string | undefined;
   search: string;
   onNavigate: (feature: string) => void;
-}> = ({ current, currentFeature, loadingFeature, search, onNavigate }) => {
-  const render = (
-    list: readonly ProjectFeatureListSection<string>[],
-    currentFeature: string | undefined,
+}> = ({
+  groupOrProject,
+  currentFeature,
+  loadingFeature,
+  search,
+  onNavigate,
+}) => {
+  const render = <F extends GroupFeature | ProjectFeature>(
+    list: readonly FeatureListSectionWithPath<F>[],
+    currentFeature: F | undefined,
+    loadingFeature: F | undefined,
   ) => (
     <Listbox
       selectionMode="single"
@@ -232,8 +252,12 @@ const FeatureList: React.FC<{
         .filter(({ items }) => items.length > 0)
         .map(({ title, items }) => (
           <ListboxSection key={title} title={title} showDivider>
-            {items.map(({ feature, label }) => {
-              const href = generateHref(current.item.web_url, feature, search);
+            {items.map(({ feature, label, path }) => {
+              const href = generateHref(
+                groupOrProject.item.web_url,
+                path,
+                search,
+              );
 
               return (
                 <ListboxItem
@@ -258,18 +282,33 @@ const FeatureList: React.FC<{
     </Listbox>
   );
 
-  switch (current.type) {
+  switch (groupOrProject.type) {
     case "group": {
-      const groupFeature =
+      const currentGroupFeature =
         currentFeature !== undefined
           ? findGroupFeature(currentFeature)
           : undefined;
+      const loadingGroupFeature =
+        loadingFeature !== undefined
+          ? findGroupFeature(loadingFeature)
+          : undefined;
 
-      return render(GROUP_FEATURE_LIST, groupFeature);
+      return render(
+        GROUP_FEATURE_LIST.map(({ title, items }) => ({
+          title,
+          items: items.map(({ feature, label }) => ({
+            feature,
+            label,
+            path: feature,
+          })),
+        })),
+        currentGroupFeature,
+        loadingGroupFeature,
+      );
     }
 
     case "project": {
-      const project = current.item;
+      const project = groupOrProject.item;
       const projectFeatureList = PROJECT_FEATURE_LIST.map(
         ({ title, items }) => ({
           title,
@@ -279,17 +318,26 @@ const FeatureList: React.FC<{
                 isProjectFeatureAvailable[feature]?.(project) ?? true,
             )
             .map(({ feature, label }) => ({
-              feature: getProjectFeaturePath(feature, project.default_branch),
+              feature,
               label,
+              path: getProjectFeaturePath(feature, project.default_branch),
             })),
         }),
       );
-      const projectFeature =
+      const currentProjectFeature =
         currentFeature !== undefined
-          ? findProjectFeature(currentFeature, project)
+          ? findProjectFeature(currentFeature)
+          : undefined;
+      const loadingProjectFeature =
+        loadingFeature !== undefined
+          ? findProjectFeature(loadingFeature)
           : undefined;
 
-      return render(projectFeatureList, projectFeature);
+      return render(
+        projectFeatureList,
+        currentProjectFeature,
+        loadingProjectFeature,
+      );
     }
   }
 };
