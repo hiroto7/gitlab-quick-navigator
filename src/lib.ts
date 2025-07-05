@@ -472,13 +472,11 @@ export const findGroupFeature = (feature: string) =>
     ?.group ??
   GROUP_FEATURES.findLast((groupFeature) => feature.startsWith(groupFeature));
 
-export const findProjectFeature = (feature: string, project: Project) =>
+export const findProjectFeature = (feature: string) =>
   SIMILAR_FEATURE_PAIRS.find(({ group }) => feature.startsWith(group))
     ?.project ??
-  PROJECT_FEATURES.findLast(
-    (projectFeature) =>
-      feature.startsWith(projectFeature) &&
-      (isProjectFeatureAvailable[projectFeature]?.(project) ?? true),
+  PROJECT_FEATURES.findLast((projectFeature) =>
+    feature.startsWith(projectFeature),
   );
 
 export const generateHref = (

@@ -5,9 +5,9 @@ import {
   ListboxItem,
   ListboxSection,
   Skeleton,
+  Spinner,
 } from "@heroui/react";
 import React, { useCallback } from "react";
-import { Spinner } from "@heroui/react";
 import { useDrag } from "./hooks";
 import { StarIcon, StarredIcon } from "./icons";
 import {
@@ -22,6 +22,7 @@ import {
   generateHref,
   getFeatureName,
   getProjectFeaturePath,
+  isProjectFeatureAvailable,
   updateTabUrl,
 } from "./lib";
 
@@ -159,6 +160,8 @@ const GroupProjectList: React.FC<{
 
   const groupFeature: GroupFeature | undefined =
     feature !== undefined ? findGroupFeature(feature) : undefined;
+  const projectFeature: ProjectFeature | undefined =
+    feature !== undefined ? findProjectFeature(feature) : undefined;
 
   const allKeys = [
     ...[...starredGroups, ...(typeof group === "object" ? [group] : [])].map(
@@ -293,26 +296,28 @@ const GroupProjectList: React.FC<{
 
           const { project, starred, onDragEnter } = item;
 
-          const projectFeature: ProjectFeature | undefined =
-            feature !== undefined
-              ? findProjectFeature(feature, project)
-              : undefined;
+          const { featurePath, featureName } =
+            projectFeature !== undefined &&
+            (isProjectFeatureAvailable[projectFeature]?.(project) ?? true)
+              ? {
+                  featurePath: getProjectFeaturePath(
+                    projectFeature,
+                    project.default_branch,
+                  ),
+                  featureName:
+                    projectFeature === "issues" && project.open_issues_count > 0
+                      ? `Issues (${project.open_issues_count.toLocaleString()})`
+                      : getFeatureName(projectFeature, PROJECT_FEATURE_NAMES),
+                }
+              : {};
 
           return getListboxItem({
             key: project.path_with_namespace,
             base: project.web_url,
             name: project.name,
             avatar: project.avatar_url,
-            featurePath:
-              projectFeature !== undefined
-                ? getProjectFeaturePath(projectFeature, project.default_branch)
-                : undefined,
-            featureName:
-              projectFeature === "issues" && project.open_issues_count > 0
-                ? `Issues (${project.open_issues_count.toLocaleString()})`
-                : projectFeature !== undefined
-                  ? getFeatureName(projectFeature, PROJECT_FEATURE_NAMES)
-                  : undefined,
+            featurePath,
+            featureName,
             starred: starred,
             isLoading: loadingPath === project.path_with_namespace,
             onPress: () => {
