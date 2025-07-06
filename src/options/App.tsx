@@ -23,35 +23,40 @@ const App: React.FC = () => {
     autoTabSwitch = false,
   } = storedData;
   return (
-    <div className="mx-auto max-w-xl space-y-8 p-4">
+    <div className="prose mx-auto max-w-xl p-4 dark:prose-invert">
       <h1>GitLab Quick Navigatorの設定</h1>
 
-      <div className="space-y-4">
-        <RadioGroup
-          label="アイコンクリック時の動作"
-          value={actionBehavior}
-          onValueChange={(value) => {
-            void set({ actionBehavior: value as "popup" | "side_panel" });
-          }}
-        >
-          <Radio value="side_panel">サイドパネルで開く</Radio>
-          <Radio value="popup">ポップアップで開く</Radio>
-        </RadioGroup>
-
-        <Checkbox
-          isSelected={autoTabSwitch}
-          onValueChange={(isSelected) =>
-            void set({ autoTabSwitch: isSelected })
-          }
-        >
-          アイテム選択時に自動でタブを切り替える
-        </Checkbox>
-      </div>
-
-      <Listbox
-        shouldHighlightOnFocus={false}
-        topContent="GitLab Quick Navigatorを有効化したサイト"
+      <h2>アイコンクリック時の動作</h2>
+      <RadioGroup
+        value={actionBehavior}
+        onValueChange={(value) => {
+          void set({ actionBehavior: value as "popup" | "side_panel" });
+        }}
       >
+        <Radio
+          value="side_panel"
+          description="ページを移動したりタブを切り替えたりしても、サイドパネルは開いたままになります"
+        >
+          サイドパネルで開く
+        </Radio>
+        <Radio
+          value="popup"
+          description="ページを移動したりタブを切り替えたりすると、ポップアップは自動的に閉じます"
+        >
+          ポップアップで開く
+        </Radio>
+      </RadioGroup>
+
+      <h2>アイテム選択時の動作</h2>
+      <Checkbox
+        isSelected={autoTabSwitch}
+        onValueChange={(isSelected) => void set({ autoTabSwitch: isSelected })}
+      >
+        アイテム選択時に自動でタブを切り替える
+      </Checkbox>
+
+      <h2>有効化済みのサイト</h2>
+      <Listbox shouldHighlightOnFocus={false} className="not-prose">
         {Object.entries(origins).map(([origin, siteOptions]) => {
           const host = new URL(origin).host;
 
