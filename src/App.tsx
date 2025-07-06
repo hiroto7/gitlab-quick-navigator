@@ -222,6 +222,14 @@ const Main: React.FC<{
       .map((group) => ({ item: group, type: "group" }) as const)
       .find(({ item }) => item.full_path === path);
 
+  const shouldShowContent =
+    projects !== undefined ||
+    group !== undefined ||
+    isProjectsLoading ||
+    isGroupLoading ||
+    starredGroups.length > 0 ||
+    starredProjects.length > 0;
+
   const [selectedTab, setTab] = useState<"groups-and-projects" | "features">(
     "groups-and-projects",
   );
@@ -265,72 +273,74 @@ const Main: React.FC<{
         <></>
       )}
 
-      <Tabs
-        fullWidth
-        classNames={{ base: "p-2" }}
-        selectedKey={tab}
-        onSelectionChange={(key) =>
-          setTab(key as "groups-and-projects" | "features")
-        }
-        disabledKeys={!isFeatureTabEnabled ? ["features"] : []}
-      >
-        <Tab
-          title={
-            <TabTitle isLoading={loadingPath !== undefined}>
-              Groups & Projects
-            </TabTitle>
+      {shouldShowContent && (
+        <Tabs
+          fullWidth
+          classNames={{ base: "p-2" }}
+          selectedKey={tab}
+          onSelectionChange={(key) =>
+            setTab(key as "groups-and-projects" | "features")
           }
-          key="groups-and-projects"
+          disabledKeys={!isFeatureTabEnabled ? ["features"] : []}
         >
-          <GroupProjectList
-            starredGroups={starredGroups}
-            starredProjects={starredProjects}
-            currentGroup={!isGroupLoading ? group : "loading"}
-            currentGroupProjects={!isProjectsLoading ? projects : "loading"}
-            path={currentPath}
-            groupFeature={groupFeature}
-            projectFeature={projectFeature}
-            search={url.search}
-            loadingPath={loadingPath}
-            onNavigate={(url) => {
-              navigate(url);
-              if (autoTabSwitch) setTab("features");
-            }}
-            onStarredGroupsUpdate={onStarredGroupsUpdate}
-            onStarredProjectsUpdate={onStarredProjectsUpdate}
-          />
-        </Tab>
-        <Tab
-          title={
-            <TabTitle
-              isLoading={
-                loadingGroupFeature !== undefined ||
-                loadingProjectFeature !== undefined
-              }
-            >
-              Features
-            </TabTitle>
-          }
-          key="features"
-        >
-          {groupOrProject !== undefined ? (
-            <FeatureList
-              groupOrProject={groupOrProject}
-              currentGroupFeature={currentGroupFeature}
-              currentProjectFeature={currentProjectFeature}
-              loadingGroupFeature={loadingGroupFeature}
-              loadingProjectFeature={loadingProjectFeature}
+          <Tab
+            title={
+              <TabTitle isLoading={loadingPath !== undefined}>
+                Groups & Projects
+              </TabTitle>
+            }
+            key="groups-and-projects"
+          >
+            <GroupProjectList
+              starredGroups={starredGroups}
+              starredProjects={starredProjects}
+              currentGroup={!isGroupLoading ? group : "loading"}
+              currentGroupProjects={!isProjectsLoading ? projects : "loading"}
+              path={currentPath}
+              groupFeature={groupFeature}
+              projectFeature={projectFeature}
               search={url.search}
+              loadingPath={loadingPath}
               onNavigate={(url) => {
                 navigate(url);
-                if (autoTabSwitch) setTab("groups-and-projects");
+                if (autoTabSwitch) setTab("features");
               }}
+              onStarredGroupsUpdate={onStarredGroupsUpdate}
+              onStarredProjectsUpdate={onStarredProjectsUpdate}
             />
-          ) : (
-            <SkeletonFeatureList />
-          )}
-        </Tab>
-      </Tabs>
+          </Tab>
+          <Tab
+            title={
+              <TabTitle
+                isLoading={
+                  loadingGroupFeature !== undefined ||
+                  loadingProjectFeature !== undefined
+                }
+              >
+                Features
+              </TabTitle>
+            }
+            key="features"
+          >
+            {groupOrProject !== undefined ? (
+              <FeatureList
+                groupOrProject={groupOrProject}
+                currentGroupFeature={currentGroupFeature}
+                currentProjectFeature={currentProjectFeature}
+                loadingGroupFeature={loadingGroupFeature}
+                loadingProjectFeature={loadingProjectFeature}
+                search={url.search}
+                onNavigate={(url) => {
+                  navigate(url);
+                  if (autoTabSwitch) setTab("groups-and-projects");
+                }}
+              />
+            ) : (
+              <SkeletonFeatureList />
+            )}
+          </Tab>
+        </Tabs>
+      )}
     </>
   );
 };

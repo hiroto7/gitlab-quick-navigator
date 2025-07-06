@@ -205,8 +205,6 @@ const GroupProjectList: React.FC<{
         : []),
   ];
 
-  if (groupItems.length === 0 && projectItems.length === 0) return undefined;
-
   return (
     <Listbox
       selectionMode="single"
