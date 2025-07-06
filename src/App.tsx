@@ -18,13 +18,15 @@ const groupDetailEndpoint = (path: string) =>
 const groupProjectsEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}/projects?order_by=last_activity_at`;
 
-const Alert1: React.FC<{ host: string; onEnable: () => void }> = ({
-  host,
-  onEnable,
-}) => (
+const Alert1: React.FC<{
+  host: string;
+  isCollapsible: boolean;
+  onEnable: () => void;
+}> = ({ host, isCollapsible, onEnable }) => (
   <CustomAlert
     color="primary"
     title="このサイトでGitLab Quick Navigatorを有効にしますか？"
+    isCollapsible={isCollapsible}
     description={
       <>
         有効にすると、今後 <span className="break-all">{host}/api/v4</span>{" "}
@@ -43,18 +45,21 @@ const Alert2: React.FC = () => (
   <CustomAlert
     color="warning"
     title="このページのURLからグループやプロジェクトを特定できません"
+    isCollapsible={false}
   />
 );
 
 const Alert3: React.FC<{
   origin: string;
+  isCollapsible: boolean;
   onSetToken: (token: string) => void;
   onDeleteToken: () => void;
-}> = ({ origin, onSetToken, onDeleteToken }) => (
+}> = ({ origin, isCollapsible, onSetToken, onDeleteToken }) => (
   <CustomAlert
     color="warning"
     title="このページでグループやプロジェクトの一覧を取得できません"
     description="このページのURLに対応していないか権限がありません。プライベートな項目を表示するには、アクセストークンを設定してください。"
+    isCollapsible={isCollapsible}
     endContent={
       <>
         <Button
@@ -89,7 +94,11 @@ const Alert3: React.FC<{
 );
 
 const Alert4: React.FC = () => (
-  <CustomAlert color="primary" title="現在のURLのパラメーターを引き継ぎます" />
+  <CustomAlert
+    color="primary"
+    title="現在のURLのパラメーターを引き継ぎます"
+    isCollapsible={false}
+  />
 );
 
 const TabTitle: React.FC<{ children: string; isLoading: boolean }> = ({
@@ -251,7 +260,11 @@ const Main: React.FC<{
       />
       {options === undefined ? (
         <div className="m-2">
-          <Alert1 host={url.host} onEnable={() => onEnable(url.origin)} />
+          <Alert1
+            host={url.host}
+            isCollapsible={shouldShowContent}
+            onEnable={() => onEnable(url.origin)}
+          />
         </div>
       ) : path === undefined ? (
         <div className="m-2">
@@ -261,6 +274,7 @@ const Main: React.FC<{
         <div className="m-2">
           <Alert3
             origin={url.origin}
+            isCollapsible={shouldShowContent}
             onSetToken={(token) => onSetToken(url.origin, token)}
             onDeleteToken={() => onDeleteToken(url.origin)}
           />
