@@ -1,4 +1,5 @@
 import {
+  Chip,
   Listbox,
   ListboxItem,
   ListboxSection,
@@ -29,6 +30,7 @@ interface FeatureListSection<F extends GroupFeature | ProjectFeature> {
 interface FeatureListItemWithPath<F extends GroupFeature | ProjectFeature>
   extends FeatureListItem<F> {
   path: string;
+  badge: number | undefined;
 }
 
 interface FeatureListSectionWithPath<F extends GroupFeature | ProjectFeature>
@@ -253,7 +255,7 @@ const FeatureList: React.FC<{
         .filter(({ items }) => items.length > 0)
         .map(({ title, items }) => (
           <ListboxSection key={title} title={title} showDivider>
-            {items.map(({ feature, label, path }) => {
+            {items.map(({ feature, label, path, badge }) => {
               const href = generateHref(
                 groupOrProject.item.web_url,
                 path,
@@ -265,9 +267,14 @@ const FeatureList: React.FC<{
                   key={feature}
                   href={href}
                   endContent={
-                    loadingFeature === feature ? (
-                      <Spinner size="sm" variant="gradient" />
-                    ) : undefined
+                    <>
+                      {loadingFeature === feature ? (
+                        <Spinner size="sm" variant="gradient" />
+                      ) : undefined}
+                      {badge !== undefined && (
+                        <Chip size="sm">{badge.toLocaleString()}</Chip>
+                      )}
+                    </>
                   }
                   onPress={() => onNavigate(href)}
                 >
@@ -282,22 +289,24 @@ const FeatureList: React.FC<{
 
   switch (groupOrProject.type) {
     case "group": {
-      const groupFeatureList = GROUP_FEATURE_LIST.map(({ title, items }) => ({
-        title,
-        items: items.map(({ feature, label }) => ({
-          feature,
-          label,
-          path: feature,
-        })),
-      }));
+      const groupFeatureList: readonly FeatureListSectionWithPath<GroupFeature>[] =
+        GROUP_FEATURE_LIST.map(({ title, items }) => ({
+          title,
+          items: items.map(({ feature, label }) => ({
+            feature,
+            label,
+            path: feature,
+            badge: undefined,
+          })),
+        }));
 
       return render(groupFeatureList, currentGroupFeature, loadingGroupFeature);
     }
 
     case "project": {
       const project = groupOrProject.item;
-      const projectFeatureList = PROJECT_FEATURE_LIST.map(
-        ({ title, items }) => ({
+      const projectFeatureList: readonly FeatureListSectionWithPath<ProjectFeature>[] =
+        PROJECT_FEATURE_LIST.map(({ title, items }) => ({
           title,
           items: items
             .filter(
@@ -308,9 +317,10 @@ const FeatureList: React.FC<{
               feature,
               label,
               path: getProjectFeaturePath(feature, project.default_branch),
+              badge:
+                feature === "issues" ? project.open_issues_count : undefined,
             })),
-        }),
-      );
+        }));
 
       return render(
         projectFeatureList,
