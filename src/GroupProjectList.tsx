@@ -65,6 +65,24 @@ const GroupProjectList: React.FC<{
     onDragEnd: onProjectDragEnd,
   } = useDrag(currentStarredProjects);
 
+  const loadingItem = (
+    <ListboxItem
+      key="skeleton"
+      textValue="Loading..."
+      startContent={
+        <Avatar
+          isBordered
+          radius="sm"
+          size="sm"
+          className="flex-shrink-0"
+          icon={<Skeleton className="h-full w-full" />}
+        />
+      }
+    >
+      <Skeleton className="h-5 w-full" />
+    </ListboxItem>
+  );
+
   const getListboxItem = useCallback(
     ({
       key,
@@ -231,12 +249,7 @@ const GroupProjectList: React.FC<{
     >
       <ListboxSection title="Groups" showDivider>
         {groupItems.map((item) => {
-          if (item === "loading")
-            return (
-              <ListboxItem key="skeleton" textValue="Loading...">
-                <Skeleton className="h-8 w-full" />
-              </ListboxItem>
-            );
+          if (item === "loading") return loadingItem;
 
           const { group, starred, onDragEnter } = item;
 
@@ -271,12 +284,7 @@ const GroupProjectList: React.FC<{
       </ListboxSection>
       <ListboxSection title="Projects">
         {projectItems.map((item) => {
-          if (item === "loading")
-            return (
-              <ListboxItem key="skeleton" textValue="Loading...">
-                <Skeleton className="h-8 w-full" />
-              </ListboxItem>
-            );
+          if (item === "loading") return loadingItem;
 
           const { project, starred, onDragEnter } = item;
 
