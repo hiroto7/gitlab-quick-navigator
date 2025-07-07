@@ -5,9 +5,9 @@ import {
   ListboxItem,
   ListboxSection,
   Skeleton,
+  Spinner,
 } from "@heroui/react";
-import React, { useCallback, useState } from "react";
-import { Spinner } from "@heroui/react";
+import React, { useCallback } from "react";
 import { useDrag } from "./hooks";
 import { StarIcon, StarredIcon } from "./icons";
 import {
@@ -17,29 +17,36 @@ import {
   PROJECT_FEATURE_NAMES,
   Project,
   ProjectFeature,
-  findGroupFeature,
-  findProjectFeature,
+  generateHref,
   getFeatureName,
+  getProjectFeaturePath,
+  isProjectFeatureAvailable,
 } from "./lib";
 
 const GroupProjectList: React.FC<{
   path: string | undefined;
-  feature: string | undefined;
+  groupFeature: GroupFeature | undefined;
+  projectFeature: ProjectFeature | undefined;
   search: string;
   starredGroups: readonly Group[];
   starredProjects: readonly Project[];
   currentGroup: Group | "loading" | undefined;
   currentGroupProjects: readonly Project[] | "loading" | undefined;
+  loadingPath: string | undefined;
+  onNavigate: (url: string) => void;
   onStarredGroupsUpdate: (groups: readonly Group[]) => void;
   onStarredProjectsUpdate: (projects: readonly Project[]) => void;
 }> = ({
   path,
-  feature,
+  groupFeature,
+  projectFeature,
   search,
   starredGroups: currentStarredGroups,
   starredProjects: currentStarredProjects,
   currentGroup: group,
   currentGroupProjects: projects,
+  loadingPath,
+  onNavigate,
   onStarredGroupsUpdate,
   onStarredProjectsUpdate,
 }) => {
@@ -58,8 +65,23 @@ const GroupProjectList: React.FC<{
     onDragEnd: onProjectDragEnd,
   } = useDrag(currentStarredProjects);
 
-  const [pressedKey, setPressedKey] = useState<string>();
-  if (pressedKey !== undefined && pressedKey === path) setPressedKey(undefined);
+  const loadingItem = (
+    <ListboxItem
+      key="skeleton"
+      textValue="Loading..."
+      startContent={
+        <Avatar
+          isBordered
+          radius="sm"
+          size="sm"
+          className="flex-shrink-0"
+          icon={<Skeleton className="h-full w-full" />}
+        />
+      }
+    >
+      <Skeleton className="h-5 w-full" />
+    </ListboxItem>
+  );
 
   const getListboxItem = useCallback(
     ({
@@ -70,6 +92,7 @@ const GroupProjectList: React.FC<{
       featurePath,
       featureName,
       starred,
+      isLoading,
       onStar,
       onDragStart,
       onDragEnd,
@@ -83,23 +106,20 @@ const GroupProjectList: React.FC<{
       featurePath: string | undefined;
       featureName: string | undefined;
       starred: boolean;
+      isLoading: boolean;
       onStar: (starred: boolean) => void;
       onDragStart: () => void;
       onDragEnd: () => void;
       onDragEnter: (() => void) | undefined;
       onDrop: () => void;
     }) => {
-      const href =
-        featurePath !== undefined ? `${base}/-/${featurePath}${search}` : base;
+      const href = generateHref(base, featurePath, search);
 
       return (
         <ListboxItem
           key={key}
           href={href}
-          onPress={() => {
-            setPressedKey(key);
-            void chrome.tabs.update({ url: href });
-          }}
+          onPress={() => onNavigate(href)}
           description={featureName}
           startContent={
             <Avatar
@@ -112,14 +132,10 @@ const GroupProjectList: React.FC<{
             />
           }
           data-starred={starred}
-          data-loading={pressedKey === key && pressedKey !== path}
+          data-loading={isLoading}
           endContent={
             <>
-              <Spinner
-                size="sm"
-                variant="gradient"
-                className="group-data-[loading=false]:hidden"
-              />
+              {isLoading && <Spinner size="sm" variant="gradient" />}
               <Button
                 isIconOnly
                 variant="light"
@@ -151,11 +167,8 @@ const GroupProjectList: React.FC<{
         </ListboxItem>
       );
     },
-    [search, pressedKey, path],
+    [onNavigate, search],
   );
-
-  const groupFeature: GroupFeature | undefined =
-    feature !== undefined ? findGroupFeature(feature) : undefined;
 
   const allKeys = [
     ...[...starredGroups, ...(typeof group === "object" ? [group] : [])].map(
@@ -210,8 +223,6 @@ const GroupProjectList: React.FC<{
         : []),
   ];
 
-  if (groupItems.length === 0 && projectItems.length === 0) return undefined;
-
   return (
     <Listbox
       selectionMode="single"
@@ -238,12 +249,7 @@ const GroupProjectList: React.FC<{
     >
       <ListboxSection title="Groups" showDivider>
         {groupItems.map((item) => {
-          if (item === "loading")
-            return (
-              <ListboxItem key="skeleton" textValue="Loading...">
-                <Skeleton className="h-8 w-full" />
-              </ListboxItem>
-            );
+          if (item === "loading") return loadingItem;
 
           const { group, starred, onDragEnter } = item;
 
@@ -258,6 +264,7 @@ const GroupProjectList: React.FC<{
                 ? getFeatureName(groupFeature, GROUP_FEATURE_NAMES)
                 : undefined,
             starred: starred,
+            isLoading: loadingPath === group.full_path,
             onStar: (starred) =>
               onStarredGroupsUpdate(
                 starred
@@ -277,37 +284,35 @@ const GroupProjectList: React.FC<{
       </ListboxSection>
       <ListboxSection title="Projects">
         {projectItems.map((item) => {
-          if (item === "loading")
-            return (
-              <ListboxItem key="skeleton" textValue="Loading...">
-                <Skeleton className="h-8 w-full" />
-              </ListboxItem>
-            );
+          if (item === "loading") return loadingItem;
 
           const { project, starred, onDragEnter } = item;
 
-          const projectFeature: ProjectFeature | undefined =
-            feature !== undefined
-              ? findProjectFeature(feature, project)
-              : undefined;
+          const { featurePath, featureName } =
+            projectFeature !== undefined &&
+            (isProjectFeatureAvailable[projectFeature]?.(project) ?? true)
+              ? {
+                  featurePath: getProjectFeaturePath(
+                    projectFeature,
+                    project.default_branch,
+                  ),
+                  featureName:
+                    projectFeature === "issues" &&
+                    project.open_issues_count !== undefined
+                      ? `Issues (${project.open_issues_count.toLocaleString()})`
+                      : getFeatureName(projectFeature, PROJECT_FEATURE_NAMES),
+                }
+              : {};
 
           return getListboxItem({
             key: project.path_with_namespace,
             base: project.web_url,
             name: project.name,
             avatar: project.avatar_url,
-            featurePath:
-              projectFeature !== undefined &&
-              ["tree", "network", "graphs"].includes(projectFeature)
-                ? `${projectFeature}/${project.default_branch}`
-                : projectFeature,
-            featureName:
-              projectFeature === "issues" && project.open_issues_count > 0
-                ? `Issues (${project.open_issues_count.toLocaleString()})`
-                : projectFeature !== undefined
-                  ? getFeatureName(projectFeature, PROJECT_FEATURE_NAMES)
-                  : undefined,
+            featurePath,
+            featureName,
             starred: starred,
+            isLoading: loadingPath === project.path_with_namespace,
             onStar: (starred) =>
               onStarredProjectsUpdate(
                 starred

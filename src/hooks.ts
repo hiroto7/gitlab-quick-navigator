@@ -59,6 +59,25 @@ export const useCurrentUrl = () => {
   return url;
 };
 
+export const useLoadingUrl = (currentUrl: URL) => {
+  const currentHref = currentUrl.href;
+
+  const [previousHref, setPreviousHref] = useState(currentHref);
+  const [loadingUrl, setLoadingUrl] = useState<URL>();
+
+  if (previousHref !== currentHref) {
+    setPreviousHref(currentHref);
+    setLoadingUrl(undefined);
+  }
+
+  const navigate = (url: string) => {
+    void chrome.tabs.update({ url });
+    setLoadingUrl(new URL(url));
+  };
+
+  return { navigate, loadingUrl };
+};
+
 export const useChromeStorage = <T extends object>(
   area: chrome.storage.AreaName,
   watch: boolean,

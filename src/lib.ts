@@ -12,7 +12,7 @@ export interface Project {
   avatar_url: string | null;
   default_branch?: string;
   id: number;
-  open_issues_count: number;
+  open_issues_count?: number;
   name: string;
   path_with_namespace: string;
   web_url: string;
@@ -467,23 +467,45 @@ const SIMILAR_FEATURE_PAIRS: readonly {
   { group: "issues_analytics", project: "analytics/issues_analytics" },
 ];
 
-export const findGroupFeature = (feature: string) =>
+const findGroupFeature = (feature: string) =>
   SIMILAR_FEATURE_PAIRS.find(({ project }) => feature.startsWith(project))
     ?.group ??
   GROUP_FEATURES.findLast((groupFeature) => feature.startsWith(groupFeature));
 
-export const findProjectFeature = (feature: string, project: Project) =>
+const findProjectFeature = (feature: string) =>
   SIMILAR_FEATURE_PAIRS.find(({ group }) => feature.startsWith(group))
     ?.project ??
-  PROJECT_FEATURES.findLast(
-    (projectFeature) =>
-      feature.startsWith(projectFeature) &&
-      (isProjectFeatureAvailable[projectFeature]?.(project) ?? true),
+  PROJECT_FEATURES.findLast((projectFeature) =>
+    feature.startsWith(projectFeature),
   );
+
+export const findFeatures = (feature: string) => ({
+  group: findGroupFeature(feature),
+  project: findProjectFeature(feature),
+});
+
+export const generateHref = (
+  base: string,
+  feature: string | undefined,
+  search: string,
+): string => {
+  if (feature === undefined) return base;
+  else return `${base}/-/${feature}${search}`;
+};
 
 export interface StoredData {
   origins?: Record<string, { token?: string }>;
   groups?: readonly Group[];
   projects?: readonly Project[];
   actionBehavior?: "popup" | "side_panel";
+  autoTabSwitch?: boolean;
 }
+
+export const getProjectFeaturePath = (
+  projectFeature: ProjectFeature,
+  branch: string | undefined,
+) => {
+  if (["tree", "network", "graphs"].includes(projectFeature))
+    return `${projectFeature}/${branch}`;
+  else return projectFeature;
+};
