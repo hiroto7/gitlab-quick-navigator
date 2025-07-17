@@ -23,7 +23,7 @@ const App: React.FC = () => {
     autoTabSwitch = false,
   } = storedData;
   return (
-    <div className="prose mx-auto max-w-xl p-4 dark:prose-invert">
+    <div className="prose dark:prose-invert mx-auto max-w-xl p-4">
       <h1>GitLab Quick Navigatorの設定</h1>
 
       <h2>アイコンクリック時の動作</h2>
@@ -88,7 +88,7 @@ const App: React.FC = () => {
                         ),
                       });
                   }}
-                  className="flex-shrink-0"
+                  className="shrink-0"
                 >
                   無効にする
                 </Button>
