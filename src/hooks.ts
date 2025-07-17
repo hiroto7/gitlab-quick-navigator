@@ -25,7 +25,7 @@ export const useCurrentUrl = () => {
   }, []);
 
   useEffect(() => {
-    const callback = (activeInfo: chrome.tabs.TabActiveInfo) => {
+    const callback = (activeInfo: chrome.tabs.OnActivatedInfo) => {
       if (activeInfo.windowId !== currentWindowId) return;
       const tabId = activeInfo.tabId;
       setCurrentTabId(tabId);
@@ -44,7 +44,7 @@ export const useCurrentUrl = () => {
   useEffect(() => {
     const callback = (
       updatedTabId: number,
-      changeInfo: chrome.tabs.TabChangeInfo,
+      changeInfo: chrome.tabs.OnUpdatedInfo,
     ) => {
       if (updatedTabId !== currentTabId) return;
       if (changeInfo.url !== undefined) setHref(changeInfo.url);
