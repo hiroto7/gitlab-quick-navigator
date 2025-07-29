@@ -1,8 +1,9 @@
 import {
+  Accordion,
+  AccordionItem,
   Chip,
   Listbox,
   ListboxItem,
-  ListboxSection,
   Skeleton,
   Spinner,
 } from "@heroui/react";
@@ -16,6 +17,7 @@ import {
   Project,
   ProjectFeature,
 } from "./lib";
+import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
 
 interface FeatureListItem<F extends GroupFeature | ProjectFeature> {
   label: string;
@@ -242,49 +244,67 @@ const FeatureList: React.FC<{
   search,
   onNavigate,
 }) => {
+  const {
+    items: { selectedFeatureListSections = [] },
+    set,
+  } = useChromeLocalStorage();
+
   const render = <F extends GroupFeature | ProjectFeature>(
     list: readonly FeatureListSectionWithPath<F>[],
     currentFeature: F | undefined,
     loadingFeature: F | undefined,
   ) => (
-    <Listbox
-      selectionMode="single"
-      selectedKeys={currentFeature !== undefined ? [currentFeature] : []}
+    <Accordion
+      selectionMode="multiple"
+      selectedKeys={selectedFeatureListSections}
+      onSelectionChange={(keys) => {
+        if (!(keys instanceof Set)) return;
+        void set({
+          selectedFeatureListSections: keys.values().map(String).toArray(),
+        });
+      }}
     >
       {list
         .filter(({ items }) => items.length > 0)
         .map(({ title, items }) => (
-          <ListboxSection key={title} title={title} showDivider>
-            {items.map(({ feature, label, path, badge }) => {
-              const href = generateHref(
-                groupOrProject.item.web_url,
-                path,
-                search,
-              );
+          <AccordionItem key={title} title={title}>
+            <Listbox
+              selectionMode="single"
+              selectedKeys={
+                currentFeature !== undefined ? [currentFeature] : []
+              }
+            >
+              {items.map(({ feature, label, path, badge }) => {
+                const href = generateHref(
+                  groupOrProject.item.web_url,
+                  path,
+                  search,
+                );
 
-              return (
-                <ListboxItem
-                  key={feature}
-                  href={href}
-                  endContent={
-                    <>
-                      {loadingFeature === feature ? (
-                        <Spinner size="sm" variant="gradient" />
-                      ) : undefined}
-                      {badge !== undefined && (
-                        <Chip size="sm">{badge.toLocaleString()}</Chip>
-                      )}
-                    </>
-                  }
-                  onPress={() => onNavigate(href)}
-                >
-                  {label}
-                </ListboxItem>
-              );
-            })}
-          </ListboxSection>
+                return (
+                  <ListboxItem
+                    key={feature}
+                    href={href}
+                    endContent={
+                      <>
+                        {loadingFeature === feature ? (
+                          <Spinner size="sm" variant="gradient" />
+                        ) : undefined}
+                        {badge !== undefined && (
+                          <Chip size="sm">{badge.toLocaleString()}</Chip>
+                        )}
+                      </>
+                    }
+                    onPress={() => onNavigate(href)}
+                  >
+                    {label}
+                  </ListboxItem>
+                );
+              })}
+            </Listbox>
+          </AccordionItem>
         ))}
-    </Listbox>
+    </Accordion>
   );
 
   switch (groupOrProject.type) {
