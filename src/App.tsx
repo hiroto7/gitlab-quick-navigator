@@ -4,13 +4,9 @@ import "./App.css";
 import CustomAlert from "./CustomAlert";
 import FeatureList, { SkeletonFeatureList } from "./FeatureList";
 import GroupProjectList from "./GroupProjectList";
-import {
-  useChromeStorage,
-  useClosestGroup,
-  useCurrentUrl,
-  useLoadingUrl,
-} from "./hooks";
-import { findFeatures, Group, parsePathname, Project, StoredData } from "./lib";
+import { useClosestGroup, useCurrentUrl, useLoadingUrl } from "./hooks";
+import { findFeatures, Group, parsePathname, Project } from "./lib";
+import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
 
 const groupDetailEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
@@ -361,10 +357,7 @@ const Main: React.FC<{
 
 const App: React.FC = () => {
   const url = useCurrentUrl();
-  const { items: storedData, set } = useChromeStorage<StoredData>(
-    "local",
-    true,
-  );
+  const { items: storedData, set } = useChromeLocalStorage();
 
   if (url === undefined || storedData === undefined) return;
 

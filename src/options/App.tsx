@@ -6,16 +6,10 @@ import {
   RadioGroup,
   Checkbox,
 } from "@heroui/react";
-import { useChromeStorage } from "../hooks";
-import { StoredData } from "../lib";
+import { useChromeLocalStorage } from "../contexts/ChromeStorageContext";
 
 const App: React.FC = () => {
-  const { items: storedData, set } = useChromeStorage<StoredData>(
-    "local",
-    true,
-  );
-
-  if (storedData === undefined) return undefined;
+  const { items: storedData, set } = useChromeLocalStorage();
 
   const {
     origins = {},

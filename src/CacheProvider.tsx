@@ -1,6 +1,6 @@
 import { Cache, SWRConfig, State } from "swr";
-import { useChromeStorage } from "./hooks";
 import React from "react";
+import { useChromeSessionStorage } from "./contexts/ChromeStorageContext";
 
 const getProvider = (stored: Record<string, State>) => (): Cache => {
   const map = new Map(Object.entries(stored));
@@ -21,11 +21,8 @@ const getProvider = (stored: Record<string, State>) => (): Cache => {
 const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { items: cache } = useChromeStorage<Record<string, State>>(
-    "session",
-    false,
-  );
-  if (cache === undefined) return;
+  const { items: cache } = useChromeSessionStorage();
+
   return (
     <SWRConfig value={{ provider: getProvider(cache) }}>{children}</SWRConfig>
   );

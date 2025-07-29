@@ -8,16 +8,24 @@ import App from "./App.tsx";
 import "./index.css";
 import CacheProvider from "./CacheProvider.tsx";
 import { SWRConfig } from "swr";
+import {
+  ChromeLocalStorageProvider,
+  ChromeSessionStorageProvider,
+} from "./contexts/ChromeStorageContext.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HeroUIProvider>
       <ThemeProvider attribute="class">
-        <CacheProvider>
-          <SWRConfig value={{ shouldRetryOnError: false }}>
-            <App />
-          </SWRConfig>
-        </CacheProvider>
+        <ChromeLocalStorageProvider>
+          <ChromeSessionStorageProvider>
+            <CacheProvider>
+              <SWRConfig value={{ shouldRetryOnError: false }}>
+                <App />
+              </SWRConfig>
+            </CacheProvider>
+          </ChromeSessionStorageProvider>
+        </ChromeLocalStorageProvider>
       </ThemeProvider>
     </HeroUIProvider>
   </React.StrictMode>,
