@@ -49,7 +49,7 @@ export const CurrentUrlProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       chrome.tabs.onActivated.removeListener(callback);
     };
-  });
+  }, [currentWindowId]);
 
   useEffect(() => {
     const callback = (
@@ -64,7 +64,7 @@ export const CurrentUrlProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       chrome.tabs.onUpdated.removeListener(callback);
     };
-  });
+  }, [currentTabId]);
 
   if (url === undefined) return <></>;
   return <CurrentUrlContext value={url}>{children}</CurrentUrlContext>;
