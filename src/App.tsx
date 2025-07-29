@@ -1,13 +1,13 @@
 import { Button, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
 import React, { useState } from "react";
 import "./App.css";
+import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
+import { useCurrentUrl } from "./contexts/CurrentUrlContext";
 import CustomAlert from "./CustomAlert";
 import FeatureList, { SkeletonFeatureList } from "./FeatureList";
 import GroupProjectList from "./GroupProjectList";
 import { useClosestGroup, useLoadingUrl } from "./hooks";
 import { findFeatures, Group, parsePathname, Project } from "./lib";
-import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
-import { useCurrentUrl } from "./contexts/CurrentUrlContext";
 
 const groupDetailEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
@@ -236,9 +236,14 @@ const Main: React.FC<{
     starredGroups.length > 0 ||
     starredProjects.length > 0;
 
+  const {
+    items: { selectedTab: storedSelectedTab = "groups-and-projects" },
+    set,
+  } = useChromeLocalStorage();
   const [selectedTab, setTab] = useState<"groups-and-projects" | "features">(
-    "groups-and-projects",
+    storedSelectedTab,
   );
+
   const isFeatureTabEnabled =
     groupOrProject !== undefined || isGroupLoading || isProjectsLoading;
   const tab = isFeatureTabEnabled ? selectedTab : "groups-and-projects";
@@ -289,9 +294,11 @@ const Main: React.FC<{
           fullWidth
           classNames={{ base: "p-2" }}
           selectedKey={tab}
-          onSelectionChange={(key) =>
-            setTab(key as "groups-and-projects" | "features")
-          }
+          onSelectionChange={(key) => {
+            const selectedTab = key as "groups-and-projects" | "features";
+            setTab(selectedTab);
+            void set({ selectedTab });
+          }}
           disabledKeys={!isFeatureTabEnabled ? ["features"] : []}
         >
           <Tab
