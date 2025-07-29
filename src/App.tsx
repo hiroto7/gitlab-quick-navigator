@@ -4,9 +4,10 @@ import "./App.css";
 import CustomAlert from "./CustomAlert";
 import FeatureList, { SkeletonFeatureList } from "./FeatureList";
 import GroupProjectList from "./GroupProjectList";
-import { useClosestGroup, useCurrentUrl, useLoadingUrl } from "./hooks";
+import { useClosestGroup, useLoadingUrl } from "./hooks";
 import { findFeatures, Group, parsePathname, Project } from "./lib";
 import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
+import { useCurrentUrl } from "./contexts/CurrentUrlContext";
 
 const groupDetailEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
@@ -159,7 +160,7 @@ const Main: React.FC<{
     currentUrl.pathname,
   );
 
-  const { loadingUrl, navigate } = useLoadingUrl(currentUrl);
+  const { loadingUrl, navigate } = useLoadingUrl();
   const url = loadingUrl ?? currentUrl;
 
   const options = origins[url.origin];

@@ -1,65 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import useSWR from "swr";
 import { move } from "./lib";
+import { useCurrentUrl } from "./contexts/CurrentUrlContext";
 
-export const useCurrentUrl = () => {
-  const [href, setHref] = useState<string>();
-  const [currentWindowId, setCurrentWindowId] = useState<number>();
-  const [currentTabId, setCurrentTabId] = useState<number>();
-  const url = useMemo(
-    () => (href !== undefined ? new URL(href) : undefined),
-    [href],
-  );
-
-  useEffect(() => {
-    void (async () => {
-      const tabs = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-      const tab = tabs[0];
-      setHref(tab?.url);
-      setCurrentTabId(tab?.id);
-      setCurrentWindowId(tab?.windowId);
-    })();
-  }, []);
-
-  useEffect(() => {
-    const callback = (activeInfo: chrome.tabs.OnActivatedInfo) => {
-      if (activeInfo.windowId !== currentWindowId) return;
-      const tabId = activeInfo.tabId;
-      setCurrentTabId(tabId);
-      void (async () => {
-        const tab = await chrome.tabs.get(tabId);
-        if (tab?.url !== "") setHref(tab?.url);
-      })();
-    };
-
-    chrome.tabs.onActivated.addListener(callback);
-    return () => {
-      chrome.tabs.onActivated.removeListener(callback);
-    };
-  });
-
-  useEffect(() => {
-    const callback = (
-      updatedTabId: number,
-      changeInfo: chrome.tabs.OnUpdatedInfo,
-    ) => {
-      if (updatedTabId !== currentTabId) return;
-      if (changeInfo.url !== undefined) setHref(changeInfo.url);
-    };
-
-    chrome.tabs.onUpdated.addListener(callback);
-    return () => {
-      chrome.tabs.onUpdated.removeListener(callback);
-    };
-  });
-
-  return url;
-};
-
-export const useLoadingUrl = (currentUrl: URL) => {
+export const useLoadingUrl = () => {
+  const currentUrl = useCurrentUrl();
   const currentHref = currentUrl.href;
 
   const [previousHref, setPreviousHref] = useState(currentHref);

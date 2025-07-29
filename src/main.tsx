@@ -12,20 +12,23 @@ import {
   ChromeLocalStorageProvider,
   ChromeSessionStorageProvider,
 } from "./contexts/ChromeStorageContext.tsx";
+import { CurrentUrlProvider } from "./contexts/CurrentUrlContext.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HeroUIProvider>
       <ThemeProvider attribute="class">
-        <ChromeLocalStorageProvider>
-          <ChromeSessionStorageProvider>
-            <CacheProvider>
-              <SWRConfig value={{ shouldRetryOnError: false }}>
-                <App />
-              </SWRConfig>
-            </CacheProvider>
-          </ChromeSessionStorageProvider>
-        </ChromeLocalStorageProvider>
+        <CurrentUrlProvider>
+          <ChromeLocalStorageProvider>
+            <ChromeSessionStorageProvider>
+              <CacheProvider>
+                <SWRConfig value={{ shouldRetryOnError: false }}>
+                  <App />
+                </SWRConfig>
+              </CacheProvider>
+            </ChromeSessionStorageProvider>
+          </ChromeLocalStorageProvider>
+        </CurrentUrlProvider>
       </ThemeProvider>
     </HeroUIProvider>
   </React.StrictMode>,
