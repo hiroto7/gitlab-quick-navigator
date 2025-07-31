@@ -8,6 +8,17 @@ import {
   Spinner,
 } from "@heroui/react";
 import React from "react";
+import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
+import CalendarIcon from "./icons/CalendarIcon";
+import ChartIcon from "./icons/ChartIcon";
+import CloudIcon from "./icons/CloudIcon";
+import CodeIcon from "./icons/CodeIcon";
+import CogIcon from "./icons/CogIcon";
+import CommandLineIcon from "./icons/CommandLineIcon";
+import ComputerIcon from "./icons/ComputerIcon";
+import RocketIcon from "./icons/RocketIcon";
+import ShieldIcon from "./icons/ShieldIcon";
+import UsersIcon from "./icons/UsersIcon";
 import {
   generateHref,
   getProjectFeaturePath,
@@ -17,7 +28,6 @@ import {
   Project,
   ProjectFeature,
 } from "./lib";
-import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
 
 interface FeatureListItem<F extends GroupFeature | ProjectFeature> {
   label: string;
@@ -25,7 +35,7 @@ interface FeatureListItem<F extends GroupFeature | ProjectFeature> {
 }
 
 interface FeatureListSection<F extends GroupFeature | ProjectFeature> {
-  title: string;
+  title: keyof typeof SECTION_ICONS;
   items: readonly FeatureListItem<F>[];
 }
 
@@ -39,6 +49,19 @@ interface FeatureListSectionWithPath<F extends GroupFeature | ProjectFeature>
   extends FeatureListSection<F> {
   items: readonly FeatureListItemWithPath<F>[];
 }
+
+const SECTION_ICONS = {
+  Manage: <UsersIcon />,
+  Plan: <CalendarIcon />,
+  Code: <CodeIcon />,
+  Build: <RocketIcon />,
+  Secure: <ShieldIcon />,
+  Deploy: <CommandLineIcon />,
+  Operate: <CloudIcon />,
+  Monitor: <ComputerIcon />,
+  Analyze: <ChartIcon />,
+  Settings: <CogIcon />,
+} satisfies Record<string, React.ReactNode>;
 
 const GROUP_FEATURE_LIST: readonly FeatureListSection<GroupFeature>[] = [
   {
@@ -267,7 +290,11 @@ const FeatureList: React.FC<{
       {list
         .filter(({ items }) => items.length > 0)
         .map(({ title, items }) => (
-          <AccordionItem key={title} title={title}>
+          <AccordionItem
+            key={title}
+            title={title}
+            startContent={SECTION_ICONS[title]}
+          >
             <Listbox
               selectionMode="single"
               selectedKeys={
