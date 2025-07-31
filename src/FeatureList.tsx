@@ -384,12 +384,14 @@ export const SkeletonFeatureList: React.FC = () => {
   const keys = Array.from({ length: 5 }).map((_, index) => index.toString());
 
   return (
-    <Listbox disabledKeys={keys}>
+    <Accordion disabledKeys={keys}>
       {keys.map((key) => (
-        <ListboxItem key={key} textValue="Loading...">
-          <Skeleton className="h-5 w-full" />
-        </ListboxItem>
+        <AccordionItem
+          key={key}
+          startContent={<Skeleton className="h-6 w-6" />}
+          title={<Skeleton className="h-6 w-full" />}
+        />
       ))}
-    </Listbox>
+    </Accordion>
   );
 };
