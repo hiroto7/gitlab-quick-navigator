@@ -313,7 +313,10 @@ const App: React.FC = () => {
               loadingPath={loadingPath}
               onNavigate={(url) => {
                 navigate(url);
-                if (autoTabSwitch) setTab("features");
+                if (autoTabSwitch) {
+                  setTab("features");
+                  scrollTo({ top: 0, behavior: "smooth" });
+                }
               }}
               onStarredGroupsUpdate={(groups) => void set({ groups })}
               onStarredProjectsUpdate={(projects) => void set({ projects })}
@@ -342,7 +345,10 @@ const App: React.FC = () => {
                 search={url.search}
                 onNavigate={(url) => {
                   navigate(url);
-                  if (autoTabSwitch) setTab("groups-and-projects");
+                  if (autoTabSwitch) {
+                    setTab("groups-and-projects");
+                    scrollTo({ top: 0, behavior: "smooth" });
+                  }
                 }}
               />
             ) : (
