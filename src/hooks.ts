@@ -1,7 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import useSWR from "swr";
+import { CurrentUrlContext } from "./contexts/CurrentUrlContext";
 import { move } from "./lib";
-import { useCurrentUrl } from "./contexts/CurrentUrlContext";
+
+export const useCurrentUrl = () => useContext(CurrentUrlContext)!;
 
 export const useLoadingUrl = () => {
   const currentUrl = useCurrentUrl();

@@ -2,11 +2,10 @@ import { Button, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
 import React, { useState } from "react";
 import "./App.css";
 import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
-import { useCurrentUrl } from "./contexts/CurrentUrlContext";
 import CustomAlert from "./CustomAlert";
 import FeatureList, { SkeletonFeatureList } from "./FeatureList";
 import GroupProjectList from "./GroupProjectList";
-import { useClosestGroup, useLoadingUrl } from "./hooks";
+import { useClosestGroup, useCurrentUrl, useLoadingUrl } from "./hooks";
 import { findFeatures, Group, parsePathname, Project } from "./lib";
 
 const groupDetailEndpoint = (path: string) =>
