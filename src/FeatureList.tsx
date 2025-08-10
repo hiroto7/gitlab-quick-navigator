@@ -1,12 +1,24 @@
 import {
+  Accordion,
+  AccordionItem,
   Chip,
   Listbox,
   ListboxItem,
-  ListboxSection,
   Skeleton,
   Spinner,
 } from "@heroui/react";
 import React from "react";
+import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
+import CalendarIcon from "./icons/CalendarIcon";
+import ChartIcon from "./icons/ChartIcon";
+import CloudIcon from "./icons/CloudIcon";
+import CodeIcon from "./icons/CodeIcon";
+import CogIcon from "./icons/CogIcon";
+import CommandLineIcon from "./icons/CommandLineIcon";
+import ComputerIcon from "./icons/ComputerIcon";
+import RocketIcon from "./icons/RocketIcon";
+import ShieldIcon from "./icons/ShieldIcon";
+import UsersIcon from "./icons/UsersIcon";
 import {
   generateHref,
   getProjectFeaturePath,
@@ -23,7 +35,7 @@ interface FeatureListItem<F extends GroupFeature | ProjectFeature> {
 }
 
 interface FeatureListSection<F extends GroupFeature | ProjectFeature> {
-  title: string;
+  title: keyof typeof SECTION_ICONS;
   items: readonly FeatureListItem<F>[];
 }
 
@@ -37,6 +49,19 @@ interface FeatureListSectionWithPath<F extends GroupFeature | ProjectFeature>
   extends FeatureListSection<F> {
   items: readonly FeatureListItemWithPath<F>[];
 }
+
+const SECTION_ICONS = {
+  Manage: <UsersIcon />,
+  Plan: <CalendarIcon />,
+  Code: <CodeIcon />,
+  Build: <RocketIcon />,
+  Secure: <ShieldIcon />,
+  Deploy: <CommandLineIcon />,
+  Operate: <CloudIcon />,
+  Monitor: <ComputerIcon />,
+  Analyze: <ChartIcon />,
+  Settings: <CogIcon />,
+} satisfies Record<string, React.ReactNode>;
 
 const GROUP_FEATURE_LIST: readonly FeatureListSection<GroupFeature>[] = [
   {
@@ -242,49 +267,71 @@ const FeatureList: React.FC<{
   search,
   onNavigate,
 }) => {
+  const {
+    items: { selectedFeatureListSections = [] },
+    set,
+  } = useChromeLocalStorage();
+
   const render = <F extends GroupFeature | ProjectFeature>(
     list: readonly FeatureListSectionWithPath<F>[],
     currentFeature: F | undefined,
     loadingFeature: F | undefined,
   ) => (
-    <Listbox
-      selectionMode="single"
-      selectedKeys={currentFeature !== undefined ? [currentFeature] : []}
+    <Accordion
+      selectionMode="multiple"
+      selectedKeys={selectedFeatureListSections}
+      onSelectionChange={(keys) => {
+        if (!(keys instanceof Set)) return;
+        void set({
+          selectedFeatureListSections: keys.values().map(String).toArray(),
+        });
+      }}
     >
       {list
         .filter(({ items }) => items.length > 0)
         .map(({ title, items }) => (
-          <ListboxSection key={title} title={title} showDivider>
-            {items.map(({ feature, label, path, badge }) => {
-              const href = generateHref(
-                groupOrProject.item.web_url,
-                path,
-                search,
-              );
+          <AccordionItem
+            key={title}
+            title={title}
+            startContent={SECTION_ICONS[title]}
+          >
+            <Listbox
+              selectionMode="single"
+              selectedKeys={
+                currentFeature !== undefined ? [currentFeature] : []
+              }
+            >
+              {items.map(({ feature, label, path, badge }) => {
+                const href = generateHref(
+                  groupOrProject.item.web_url,
+                  path,
+                  search,
+                );
 
-              return (
-                <ListboxItem
-                  key={feature}
-                  href={href}
-                  endContent={
-                    <>
-                      {loadingFeature === feature ? (
-                        <Spinner size="sm" variant="gradient" />
-                      ) : undefined}
-                      {badge !== undefined && (
-                        <Chip size="sm">{badge.toLocaleString()}</Chip>
-                      )}
-                    </>
-                  }
-                  onPress={() => onNavigate(href)}
-                >
-                  {label}
-                </ListboxItem>
-              );
-            })}
-          </ListboxSection>
+                return (
+                  <ListboxItem
+                    key={feature}
+                    href={href}
+                    endContent={
+                      <>
+                        {loadingFeature === feature ? (
+                          <Spinner size="sm" variant="gradient" />
+                        ) : undefined}
+                        {badge !== undefined && (
+                          <Chip size="sm">{badge.toLocaleString()}</Chip>
+                        )}
+                      </>
+                    }
+                    onPress={() => onNavigate(href)}
+                  >
+                    {label}
+                  </ListboxItem>
+                );
+              })}
+            </Listbox>
+          </AccordionItem>
         ))}
-    </Listbox>
+    </Accordion>
   );
 
   switch (groupOrProject.type) {
@@ -337,12 +384,14 @@ export const SkeletonFeatureList: React.FC = () => {
   const keys = Array.from({ length: 5 }).map((_, index) => index.toString());
 
   return (
-    <Listbox disabledKeys={keys}>
+    <Accordion disabledKeys={keys}>
       {keys.map((key) => (
-        <ListboxItem key={key} textValue="Loading...">
-          <Skeleton className="h-5 w-full" />
-        </ListboxItem>
+        <AccordionItem
+          key={key}
+          startContent={<Skeleton className="h-6 w-6" />}
+          title={<Skeleton className="h-6 w-full" />}
+        />
       ))}
-    </Listbox>
+    </Accordion>
   );
 };

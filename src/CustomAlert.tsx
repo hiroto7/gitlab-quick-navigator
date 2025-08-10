@@ -1,6 +1,7 @@
 import { Alert, Button } from "@heroui/react";
 import React, { useState } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "./icons";
+import ChevronDownIcon from "./icons/ChevronDownIcon";
+import ChevronUpIcon from "./icons/ChevronUpIcon";
 
 const CustomAlert: React.FC<{
   color: "primary" | "warning";

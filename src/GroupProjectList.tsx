@@ -9,7 +9,8 @@ import {
 } from "@heroui/react";
 import React, { useCallback } from "react";
 import { useDrag } from "./hooks";
-import { StarIcon, StarredIcon } from "./icons";
+import StarIcon from "./icons/StarIcon";
+import StarredIcon from "./icons/StarredIcon";
 import {
   GROUP_FEATURE_NAMES,
   Group,

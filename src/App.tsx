@@ -1,16 +1,12 @@
 import { Button, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
 import React, { useState } from "react";
 import "./App.css";
+import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
 import CustomAlert from "./CustomAlert";
 import FeatureList, { SkeletonFeatureList } from "./FeatureList";
 import GroupProjectList from "./GroupProjectList";
-import {
-  useChromeStorage,
-  useClosestGroup,
-  useCurrentUrl,
-  useLoadingUrl,
-} from "./hooks";
-import { findFeatures, Group, parsePathname, Project, StoredData } from "./lib";
+import { useClosestGroup, useCurrentUrl, useLoadingUrl } from "./hooks";
+import { findFeatures, Group, parsePathname, Project } from "./lib";
 
 const groupDetailEndpoint = (path: string) =>
   `/api/v4/groups/${encodeURIComponent(path)}?with_projects=false`;
@@ -136,34 +132,24 @@ const parseLoadingPathname = ({
   return { loadingPath, loadingGroupFeature, loadingProjectFeature };
 };
 
-const Main: React.FC<{
-  origins: Record<string, { token?: string }>;
-  url: URL;
-  starredGroups: readonly Group[];
-  starredProjects: readonly Project[];
-  autoTabSwitch: boolean;
-  onEnable: (origin: string) => void;
-  onSetToken: (origin: string, token: string) => void;
-  onDeleteToken: (origin: string) => void;
-  onStarredGroupsUpdate: (groups: readonly Group[]) => void;
-  onStarredProjectsUpdate: (projects: readonly Project[]) => void;
-}> = ({
-  origins,
-  url: currentUrl,
-  starredGroups,
-  starredProjects,
-  autoTabSwitch,
-  onEnable,
-  onSetToken,
-  onDeleteToken,
-  onStarredGroupsUpdate,
-  onStarredProjectsUpdate,
-}) => {
+const App: React.FC = () => {
+  const currentUrl = useCurrentUrl();
+  const {
+    items: {
+      origins = {},
+      groups: starredGroups = [],
+      projects: starredProjects = [],
+      autoTabSwitch = false,
+      selectedTab: storedSelectedTab = "groups-and-projects",
+    },
+    set,
+  } = useChromeLocalStorage();
+
   const { path: currentPath, feature: currentFeature } = parsePathname(
     currentUrl.pathname,
   );
 
-  const { loadingUrl, navigate } = useLoadingUrl(currentUrl);
+  const { loadingUrl, navigate } = useLoadingUrl();
   const url = loadingUrl ?? currentUrl;
 
   const options = origins[url.origin];
@@ -196,11 +182,11 @@ const Main: React.FC<{
     path,
     options?.token,
     (loadedGroup) =>
-      onStarredGroupsUpdate(
-        starredGroups.map((starredGroup) =>
+      void set({
+        groups: starredGroups.map((starredGroup) =>
           starredGroup.id === loadedGroup.id ? loadedGroup : starredGroup,
         ),
-      ),
+      }),
   );
   const {
     data: projects,
@@ -213,14 +199,14 @@ const Main: React.FC<{
     path,
     options?.token,
     (loadedProjects) =>
-      onStarredProjectsUpdate(
-        starredProjects.map(
+      void set({
+        projects: starredProjects.map(
           (starredProject) =>
             loadedProjects.find(
               (loadedProject) => starredProject.id === loadedProject.id,
             ) ?? starredProject,
         ),
-      ),
+      }),
   );
 
   const groupOrProject =
@@ -240,8 +226,9 @@ const Main: React.FC<{
     starredProjects.length > 0;
 
   const [selectedTab, setTab] = useState<"groups-and-projects" | "features">(
-    "groups-and-projects",
+    storedSelectedTab,
   );
+
   const isFeatureTabEnabled =
     groupOrProject !== undefined || isGroupLoading || isProjectsLoading;
   const tab = isFeatureTabEnabled ? selectedTab : "groups-and-projects";
@@ -263,7 +250,9 @@ const Main: React.FC<{
           <Alert1
             host={url.host}
             isCollapsible={shouldShowContent}
-            onEnable={() => onEnable(url.origin)}
+            onEnable={() =>
+              void set({ origins: { ...origins, [url.origin]: {} } })
+            }
           />
         </div>
       ) : path === undefined ? (
@@ -275,8 +264,12 @@ const Main: React.FC<{
           <Alert3
             origin={url.origin}
             isCollapsible={shouldShowContent}
-            onSetToken={(token) => onSetToken(url.origin, token)}
-            onDeleteToken={() => onDeleteToken(url.origin)}
+            onSetToken={(token) =>
+              void set({ origins: { ...origins, [url.origin]: { token } } })
+            }
+            onDeleteToken={() =>
+              void set({ origins: { ...origins, [url.origin]: {} } })
+            }
           />
         </div>
       ) : url.search !== "" ? (
@@ -292,9 +285,11 @@ const Main: React.FC<{
           fullWidth
           classNames={{ base: "p-2" }}
           selectedKey={tab}
-          onSelectionChange={(key) =>
-            setTab(key as "groups-and-projects" | "features")
-          }
+          onSelectionChange={(key) => {
+            const selectedTab = key as "groups-and-projects" | "features";
+            setTab(selectedTab);
+            void set({ selectedTab });
+          }}
           disabledKeys={!isFeatureTabEnabled ? ["features"] : []}
         >
           <Tab
@@ -317,10 +312,13 @@ const Main: React.FC<{
               loadingPath={loadingPath}
               onNavigate={(url) => {
                 navigate(url);
-                if (autoTabSwitch) setTab("features");
+                if (autoTabSwitch) {
+                  setTab("features");
+                  scrollTo({ top: 0, behavior: "smooth" });
+                }
               }}
-              onStarredGroupsUpdate={onStarredGroupsUpdate}
-              onStarredProjectsUpdate={onStarredProjectsUpdate}
+              onStarredGroupsUpdate={(groups) => void set({ groups })}
+              onStarredProjectsUpdate={(projects) => void set({ projects })}
             />
           </Tab>
           <Tab
@@ -346,7 +344,10 @@ const Main: React.FC<{
                 search={url.search}
                 onNavigate={(url) => {
                   navigate(url);
-                  if (autoTabSwitch) setTab("groups-and-projects");
+                  if (autoTabSwitch) {
+                    setTab("groups-and-projects");
+                    scrollTo({ top: 0, behavior: "smooth" });
+                  }
                 }}
               />
             ) : (
@@ -356,42 +357,6 @@ const Main: React.FC<{
         </Tabs>
       )}
     </>
-  );
-};
-
-const App: React.FC = () => {
-  const url = useCurrentUrl();
-  const { items: storedData, set } = useChromeStorage<StoredData>(
-    "local",
-    true,
-  );
-
-  if (url === undefined || storedData === undefined) return;
-
-  const {
-    origins = {},
-    groups = [],
-    projects = [],
-    autoTabSwitch = false,
-  } = storedData;
-
-  return (
-    <Main
-      url={url}
-      origins={origins}
-      starredGroups={groups}
-      starredProjects={projects}
-      autoTabSwitch={autoTabSwitch}
-      onEnable={(origin) => void set({ origins: { ...origins, [origin]: {} } })}
-      onSetToken={(origin, token) =>
-        void set({ origins: { ...origins, [origin]: { token } } })
-      }
-      onDeleteToken={(origin) =>
-        void set({ origins: { ...origins, [origin]: {} } })
-      }
-      onStarredGroupsUpdate={(groups) => void set({ groups })}
-      onStarredProjectsUpdate={(projects) => void set({ projects })}
-    />
   );
 };
 
