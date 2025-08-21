@@ -7,4 +7,5 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), crx({ manifest }), tailwindcss()],
+  server: { cors: { origin: [/chrome-extension:\/\//] } },
 });
