@@ -39,14 +39,16 @@ interface FeatureListSection<F extends GroupFeature | ProjectFeature> {
   items: readonly FeatureListItem<F>[];
 }
 
-interface FeatureListItemWithPath<F extends GroupFeature | ProjectFeature>
-  extends FeatureListItem<F> {
+interface FeatureListItemWithPath<
+  F extends GroupFeature | ProjectFeature,
+> extends FeatureListItem<F> {
   path: string;
   badge: number | undefined;
 }
 
-interface FeatureListSectionWithPath<F extends GroupFeature | ProjectFeature>
-  extends FeatureListSection<F> {
+interface FeatureListSectionWithPath<
+  F extends GroupFeature | ProjectFeature,
+> extends FeatureListSection<F> {
   items: readonly FeatureListItemWithPath<F>[];
 }
 
