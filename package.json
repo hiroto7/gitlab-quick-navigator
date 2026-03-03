@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "2.3.0",
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^9.39.3",
     "@tailwindcss/vite": "^4.2.1",
     "@tailwindcss/typography": "^0.5.19",
     "@tsconfig/strictest": "^2.0.8",
