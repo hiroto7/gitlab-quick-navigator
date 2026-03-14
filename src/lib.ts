@@ -57,6 +57,7 @@ export const GROUP_FEATURES = [
 
   // Plan
   "issues",
+  "work_items",
   "epics",
   "boards",
   "epic_boards",
@@ -123,6 +124,7 @@ export const PROJECT_FEATURES = [
 
   // Plan
   "issues",
+  "work_items",
   "boards",
   "milestones",
   "cadences",
@@ -346,6 +348,7 @@ export const isProjectFeatureAvailable: Partial<
   Record<ProjectFeature, (project: Project) => boolean>
 > = {
   issues: isEnabledOrPrivate("issues"),
+  work_items: isEnabledOrPrivate("issues"),
   boards: isEnabledOrPrivate("issues"),
   incidents: isEnabledOrPrivate("issues"),
   "issues/service_desk": isEnabledOrPrivate("issues"),
