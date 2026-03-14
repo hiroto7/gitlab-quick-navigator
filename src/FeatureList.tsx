@@ -77,9 +77,8 @@ const GROUP_FEATURE_LIST: readonly FeatureListSection<GroupFeature>[] = [
   {
     title: "Plan",
     items: [
-      { label: "Issues", feature: "issues" },
+      { label: "Work items", feature: "work_items" },
       { label: "Issue boards", feature: "boards" },
-      { label: "Epics", feature: "epics" },
       { label: "Epic boards", feature: "epic_boards" },
       { label: "Roadmap", feature: "roadmap" },
       { label: "Milestones", feature: "milestones" },
@@ -149,7 +148,7 @@ const PROJECT_FEATURE_LIST: readonly FeatureListSection<ProjectFeature>[] = [
   {
     title: "Plan",
     items: [
-      { label: "Issues", feature: "issues" },
+      { label: "Work items", feature: "work_items" },
       { label: "Issue boards", feature: "boards" },
       { label: "Milestones", feature: "milestones" },
       { label: "Iterations", feature: "cadences" },
