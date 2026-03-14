@@ -39,14 +39,16 @@ interface FeatureListSection<F extends GroupFeature | ProjectFeature> {
   items: readonly FeatureListItem<F>[];
 }
 
-interface FeatureListItemWithPath<F extends GroupFeature | ProjectFeature>
-  extends FeatureListItem<F> {
+interface FeatureListItemWithPath<
+  F extends GroupFeature | ProjectFeature,
+> extends FeatureListItem<F> {
   path: string;
   badge: number | undefined;
 }
 
-interface FeatureListSectionWithPath<F extends GroupFeature | ProjectFeature>
-  extends FeatureListSection<F> {
+interface FeatureListSectionWithPath<
+  F extends GroupFeature | ProjectFeature,
+> extends FeatureListSection<F> {
   items: readonly FeatureListItemWithPath<F>[];
 }
 
@@ -75,9 +77,8 @@ const GROUP_FEATURE_LIST: readonly FeatureListSection<GroupFeature>[] = [
   {
     title: "Plan",
     items: [
-      { label: "Issues", feature: "issues" },
+      { label: "Work items", feature: "work_items" },
       { label: "Issue boards", feature: "boards" },
-      { label: "Epics", feature: "epics" },
       { label: "Epic boards", feature: "epic_boards" },
       { label: "Roadmap", feature: "roadmap" },
       { label: "Milestones", feature: "milestones" },
@@ -147,7 +148,7 @@ const PROJECT_FEATURE_LIST: readonly FeatureListSection<ProjectFeature>[] = [
   {
     title: "Plan",
     items: [
-      { label: "Issues", feature: "issues" },
+      { label: "Work items", feature: "work_items" },
       { label: "Issue boards", feature: "boards" },
       { label: "Milestones", feature: "milestones" },
       { label: "Iterations", feature: "cadences" },

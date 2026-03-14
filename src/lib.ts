@@ -57,6 +57,7 @@ export const GROUP_FEATURES = [
 
   // Plan
   "issues",
+  "work_items",
   "epics",
   "boards",
   "epic_boards",
@@ -123,6 +124,7 @@ export const PROJECT_FEATURES = [
 
   // Plan
   "issues",
+  "work_items",
   "boards",
   "milestones",
   "cadences",
