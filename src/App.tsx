@@ -1,4 +1,4 @@
-import { Button, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
+import { Button, Input, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
 import React, { useState } from "react";
 import "./App.css";
 import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
@@ -46,45 +46,18 @@ const Alert2: React.FC = () => (
 );
 
 const Alert3: React.FC<{
-  origin: string;
   isCollapsible: boolean;
-  onSetToken: (token: string) => void;
-  onDeleteToken: () => void;
-}> = ({ origin, isCollapsible, onSetToken, onDeleteToken }) => (
+  onOpenTokenSetup: () => void;
+}> = ({ isCollapsible, onOpenTokenSetup }) => (
   <CustomAlert
     color="warning"
     title="このページでグループやプロジェクトの一覧を取得できません"
     description="このページのURLに対応していないか権限がありません。プライベートな項目を表示するには、アクセストークンを設定してください。"
     isCollapsible={isCollapsible}
     endContent={
-      <>
-        <Button
-          as={Link}
-          size="sm"
-          color="warning"
-          variant="flat"
-          showAnchorIcon
-          isExternal
-          href={`${origin}/-/user_settings/personal_access_tokens?name=GitLab+Quick+Navigator&scopes=read_api`}
-        >
-          GitLabでトークンを発行
-        </Button>
-        <Button
-          size="sm"
-          color="warning"
-          onPress={() => {
-            const token = prompt(
-              `${origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。`,
-            );
-            if (token === null) return;
-
-            if (token !== "") onSetToken(token);
-            else onDeleteToken();
-          }}
-        >
-          トークンを設定
-        </Button>
-      </>
+      <Button size="sm" color="warning" onPress={onOpenTokenSetup}>
+        アクセストークンを設定
+      </Button>
     }
   />
 );
@@ -96,6 +69,50 @@ const Alert4: React.FC = () => (
     isCollapsible={false}
   />
 );
+
+const TokenSetupView: React.FC<{
+  origin: string;
+  onSetToken: (token: string) => void;
+  onClose: () => void;
+}> = ({ origin, onSetToken, onClose }) => {
+  const [token, setToken] = useState("");
+  const tokenUrl = `${origin}/-/user_settings/personal_access_tokens?name=GitLab+Quick+Navigator&scopes=read_api`;
+  const trimmedToken = token.trim();
+
+  return (
+    <div className="m-3 flex flex-col gap-3">
+      <div className="text-sm text-default-600">アクセストークン設定</div>
+      <div className="text-lg font-medium">アクセストークンを入力</div>
+      <div className="text-sm">
+        {origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。
+      </div>
+      <Input
+        label="アクセストークン"
+        value={token}
+        onChange={(event) => setToken(event.target.value)}
+        autoFocus
+      />
+      <Link isExternal showAnchorIcon href={tokenUrl}>
+        GitLabでアクセストークンを発行
+      </Link>
+      <div className="flex gap-2">
+        <Button
+          color="primary"
+          isDisabled={trimmedToken === ""}
+          onPress={() => {
+            onSetToken(trimmedToken);
+            onClose();
+          }}
+        >
+          保存
+        </Button>
+        <Button variant="flat" onPress={onClose}>
+          キャンセル
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 const TabTitle: React.FC<{ children: string; isLoading: boolean }> = ({
   children,
@@ -228,10 +245,24 @@ const App: React.FC = () => {
   const [selectedTab, setTab] = useState<"groups-and-projects" | "features">(
     storedSelectedTab,
   );
+  const [isTokenSetupOpen, setIsTokenSetupOpen] = useState(false);
 
   const isFeatureTabEnabled =
     groupOrProject !== undefined || isGroupLoading || isProjectsLoading;
   const tab = isFeatureTabEnabled ? selectedTab : "groups-and-projects";
+  const onOpenTokenSetup = () => setIsTokenSetupOpen(true);
+
+  if (isTokenSetupOpen) {
+    return (
+      <TokenSetupView
+        origin={url.origin}
+        onSetToken={(token) =>
+          void set({ origins: { ...origins, [url.origin]: { token } } })
+        }
+        onClose={() => setIsTokenSetupOpen(false)}
+      />
+    );
+  }
 
   return (
     <>
@@ -262,14 +293,8 @@ const App: React.FC = () => {
       ) : groupError || projectsError ? (
         <div className="m-2">
           <Alert3
-            origin={url.origin}
             isCollapsible={shouldShowContent}
-            onSetToken={(token) =>
-              void set({ origins: { ...origins, [url.origin]: { token } } })
-            }
-            onDeleteToken={() =>
-              void set({ origins: { ...origins, [url.origin]: {} } })
-            }
+            onOpenTokenSetup={onOpenTokenSetup}
           />
         </div>
       ) : url.search !== "" ? (
