@@ -135,7 +135,7 @@ const GroupProjectList: React.FC<{
           data-starred={starred}
           data-loading={isLoading}
           endContent={
-            <>
+            <div className="flex gap-2">
               {isLoading && <Spinner size="sm" variant="gradient" />}
               <Button
                 isIconOnly
@@ -149,7 +149,7 @@ const GroupProjectList: React.FC<{
               >
                 {starred ? <StarredIcon /> : <StarIcon />}
               </Button>
-            </>
+            </div>
           }
           draggable={starred}
           onDragOver={(event) => {
