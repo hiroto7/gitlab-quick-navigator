@@ -12,36 +12,32 @@ const CustomAlert: React.FC<{
 }> = ({ color, title, description, endContent, isCollapsible }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const shouldShowDetail = !isCollapsible || isExpanded;
+  const status = color === "primary" ? "accent" : color;
 
   return (
-    <Alert
-      hideIcon
-      variant="faded"
-      color={color}
-      title={
-        <div className="flex items-center justify-between gap-x-1">
-          {title}
-          {isCollapsible && (
-            <Button
-              size="sm"
-              color={color}
-              variant="light"
-              isIconOnly
-              onPress={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-            </Button>
+    <Alert status={status} className="flex flex-col items-stretch gap-2">
+      <div className="flex w-full items-start justify-between gap-x-1">
+        <Alert.Content className="w-full">
+          <Alert.Title>{title}</Alert.Title>
+          {shouldShowDetail && description && (
+            <Alert.Description className="pl-0">
+              {description}
+            </Alert.Description>
           )}
-        </div>
-      }
-      description={shouldShowDetail && description}
-      classNames={{
-        base: "flex flex-col items-stretch gap-2",
-        mainWrapper: "ms-0",
-        description: "pl-0",
-      }}
-      endContent={shouldShowDetail && endContent}
-    />
+        </Alert.Content>
+        {isCollapsible && (
+          <Button
+            size="sm"
+            variant="tertiary"
+            isIconOnly
+            onPress={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+          </Button>
+        )}
+      </div>
+      {shouldShowDetail && endContent}
+    </Alert>
   );
 };
 

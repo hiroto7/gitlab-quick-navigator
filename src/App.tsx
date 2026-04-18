@@ -1,4 +1,11 @@
-import { Button, Link, Progress, Spinner, Tab, Tabs } from "@heroui/react";
+import {
+  Button,
+  Link,
+  ProgressBar,
+  Spinner,
+  Tabs,
+  type Key,
+} from "@heroui/react";
 import React, { useState } from "react";
 import "./App.css";
 import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
@@ -30,7 +37,7 @@ const Alert1: React.FC<{
       </>
     }
     endContent={
-      <Button size="sm" color="primary" onPress={onEnable}>
+      <Button size="sm" variant="primary" onPress={onEnable}>
         有効にする
       </Button>
     }
@@ -58,20 +65,18 @@ const Alert3: React.FC<{
     isCollapsible={isCollapsible}
     endContent={
       <>
-        <Button
-          as={Link}
-          size="sm"
-          color="warning"
-          variant="flat"
-          showAnchorIcon
-          isExternal
+        <Link
           href={`${origin}/-/user_settings/personal_access_tokens?name=GitLab+Quick+Navigator&scopes=read_api`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center rounded-md px-3 py-1.5 text-sm"
         >
           GitLabでトークンを発行
-        </Button>
+          <Link.Icon />
+        </Link>
         <Button
           size="sm"
-          color="warning"
+          variant="secondary"
           onPress={() => {
             const token = prompt(
               `${origin} 用のアクセストークンを入力してください。read_apiスコープが必要です。`,
@@ -103,7 +108,7 @@ const TabTitle: React.FC<{ children: string; isLoading: boolean }> = ({
 }) => (
   <div className="flex items-center gap-2">
     <span>{children}</span>
-    {loading && <Spinner size="sm" variant="gradient" />}
+    {loading && <Spinner color="current" size="sm" />}
   </div>
 );
 
@@ -235,16 +240,19 @@ const App: React.FC = () => {
 
   return (
     <>
-      <Progress
+      <ProgressBar
         size="sm"
         color="default"
-        radius="none"
         isIndeterminate
-        className={
-          !isGroupValidating && !isProjectsValidating ? "invisible" : undefined
-        }
+        {...(!isGroupValidating && !isProjectsValidating
+          ? { className: "invisible" }
+          : {})}
         aria-label="Loading..."
-      />
+      >
+        <ProgressBar.Track>
+          <ProgressBar.Fill />
+        </ProgressBar.Track>
+      </ProgressBar>
       {options === undefined ? (
         <div className="m-2">
           <Alert1
@@ -282,24 +290,39 @@ const App: React.FC = () => {
 
       {shouldShowContent && (
         <Tabs
-          fullWidth
-          classNames={{ base: "p-2" }}
+          className="p-2"
           selectedKey={tab}
-          onSelectionChange={(key) => {
-            const selectedTab = key as "groups-and-projects" | "features";
+          onSelectionChange={(key: Key) => {
+            const selectedTab = String(key) as
+              | "groups-and-projects"
+              | "features";
             setTab(selectedTab);
             void set({ selectedTab });
           }}
           disabledKeys={!isFeatureTabEnabled ? ["features"] : []}
         >
-          <Tab
-            title={
-              <TabTitle isLoading={loadingPath !== undefined}>
-                Groups & Projects
-              </TabTitle>
-            }
-            key="groups-and-projects"
-          >
+          <Tabs.ListContainer>
+            <Tabs.List aria-label="Navigation sections">
+              <Tabs.Tab id="groups-and-projects">
+                <TabTitle isLoading={loadingPath !== undefined}>
+                  Groups & Projects
+                </TabTitle>
+                <Tabs.Indicator />
+              </Tabs.Tab>
+              <Tabs.Tab id="features">
+                <TabTitle
+                  isLoading={
+                    loadingGroupFeature !== undefined ||
+                    loadingProjectFeature !== undefined
+                  }
+                >
+                  Features
+                </TabTitle>
+                <Tabs.Indicator />
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+          <Tabs.Panel id="groups-and-projects" className="p-0">
             <GroupProjectList
               starredGroups={starredGroups}
               starredProjects={starredProjects}
@@ -320,20 +343,8 @@ const App: React.FC = () => {
               onStarredGroupsUpdate={(groups) => void set({ groups })}
               onStarredProjectsUpdate={(projects) => void set({ projects })}
             />
-          </Tab>
-          <Tab
-            title={
-              <TabTitle
-                isLoading={
-                  loadingGroupFeature !== undefined ||
-                  loadingProjectFeature !== undefined
-                }
-              >
-                Features
-              </TabTitle>
-            }
-            key="features"
-          >
+          </Tabs.Panel>
+          <Tabs.Panel id="features" className="p-0">
             {groupOrProject !== undefined ? (
               <FeatureList
                 groupOrProject={groupOrProject}
@@ -353,7 +364,7 @@ const App: React.FC = () => {
             ) : (
               <SkeletonFeatureList />
             )}
-          </Tab>
+          </Tabs.Panel>
         </Tabs>
       )}
     </>
