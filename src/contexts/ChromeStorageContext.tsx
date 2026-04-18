@@ -28,10 +28,7 @@ const createChromeStorageContext = <T,>(
   }) => {
     const [items, setItems] = useState<T>();
 
-    const load = useCallback(async () => {
-      const items = (await chrome.storage[area].get()) as T;
-      setItems(items);
-    }, []);
+    const getItems = useCallback(() => chrome.storage[area].get(), []);
 
     const set = useCallback(async (items: Partial<T>) => {
       setItems((currentItems) =>
@@ -45,15 +42,26 @@ const createChromeStorageContext = <T,>(
       [],
     );
 
-    useEffect(() => void load(), [load]);
+    useEffect(() => {
+      let isMounted = true;
+      void getItems().then((items) => {
+        if (isMounted) setItems(items as T);
+      });
+      return () => {
+        isMounted = false;
+      };
+    }, [getItems]);
 
     useEffect(() => {
       if (!watch) return;
-      chrome.storage[area].onChanged.addListener(() => void load());
-      return () => {
-        chrome.storage[area].onChanged.removeListener(() => void load());
+      const listener = () => {
+        void getItems().then((items) => setItems(items as T));
       };
-    }, [load]);
+      chrome.storage[area].onChanged.addListener(listener);
+      return () => {
+        chrome.storage[area].onChanged.removeListener(listener);
+      };
+    }, [getItems]);
 
     if (items === undefined) return <></>;
 

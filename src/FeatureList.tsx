@@ -1,11 +1,11 @@
 import {
   Accordion,
-  AccordionItem,
   Chip,
-  Listbox,
-  ListboxItem,
+  Label,
+  ListBox,
   Skeleton,
   Spinner,
+  type Key,
 } from "@heroui/react";
 import React from "react";
 import { useChromeLocalStorage } from "./contexts/ChromeStorageContext";
@@ -279,9 +279,9 @@ const FeatureList: React.FC<{
     loadingFeature: F | undefined,
   ) => (
     <Accordion
-      selectionMode="multiple"
-      selectedKeys={selectedFeatureListSections}
-      onSelectionChange={(keys) => {
+      allowsMultipleExpanded
+      expandedKeys={new Set(selectedFeatureListSections)}
+      onExpandedChange={(keys: Set<Key>) => {
         if (!(keys instanceof Set)) return;
         void set({
           selectedFeatureListSections: keys.values().map(String).toArray(),
@@ -291,46 +291,57 @@ const FeatureList: React.FC<{
       {list
         .filter(({ items }) => items.length > 0)
         .map(({ title, items }) => (
-          <AccordionItem
-            key={title}
-            title={title}
-            startContent={SECTION_ICONS[title]}
-          >
-            <Listbox
-              selectionMode="single"
-              selectedKeys={
-                currentFeature !== undefined ? [currentFeature] : []
-              }
-            >
-              {items.map(({ feature, label, path, badge }) => {
-                const href = generateHref(
-                  groupOrProject.item.web_url,
-                  path,
-                  search,
-                );
+          <Accordion.Item key={title} id={title}>
+            <Accordion.Heading>
+              <Accordion.Trigger className="gap-2">
+                {SECTION_ICONS[title]}
+                <span className="flex-1">{title}</span>
+                <Accordion.Indicator />
+              </Accordion.Trigger>
+            </Accordion.Heading>
+            <Accordion.Panel>
+              <Accordion.Body>
+                <ListBox
+                  selectionMode="single"
+                  selectedKeys={
+                    currentFeature !== undefined
+                      ? new Set([currentFeature])
+                      : new Set()
+                  }
+                >
+                  {items.map(({ feature, label, path, badge }) => {
+                    const href = generateHref(
+                      groupOrProject.item.web_url,
+                      path,
+                      search,
+                    );
 
-                return (
-                  <ListboxItem
-                    key={feature}
-                    href={href}
-                    endContent={
-                      <>
-                        {loadingFeature === feature ? (
-                          <Spinner size="sm" variant="gradient" />
-                        ) : undefined}
-                        {badge !== undefined && (
-                          <Chip size="sm">{badge.toLocaleString()}</Chip>
-                        )}
-                      </>
-                    }
-                    onPress={() => onNavigate(href)}
-                  >
-                    {label}
-                  </ListboxItem>
-                );
-              })}
-            </Listbox>
-          </AccordionItem>
+                    return (
+                      <ListBox.Item
+                        key={feature}
+                        id={feature}
+                        href={href}
+                        textValue={label}
+                        className="flex items-center gap-2"
+                        onPress={() => onNavigate(href)}
+                      >
+                        <Label className="flex-1">{label}</Label>
+                        <span className="flex items-center gap-2">
+                          <ListBox.ItemIndicator />
+                          {loadingFeature === feature ? (
+                            <Spinner color="current" size="sm" />
+                          ) : undefined}
+                          {badge !== undefined && (
+                            <Chip size="sm">{badge.toLocaleString()}</Chip>
+                          )}
+                        </span>
+                      </ListBox.Item>
+                    );
+                  })}
+                </ListBox>
+              </Accordion.Body>
+            </Accordion.Panel>
+          </Accordion.Item>
         ))}
     </Accordion>
   );
@@ -385,13 +396,20 @@ export const SkeletonFeatureList: React.FC = () => {
   const keys = Array.from({ length: 5 }).map((_, index) => index.toString());
 
   return (
-    <Accordion disabledKeys={keys}>
+    <Accordion>
       {keys.map((key) => (
-        <AccordionItem
-          key={key}
-          startContent={<Skeleton className="h-6 w-6" />}
-          title={<Skeleton className="h-6 w-full" />}
-        />
+        <Accordion.Item key={key} id={key} isDisabled>
+          <Accordion.Heading>
+            <Accordion.Trigger>
+              <Skeleton className="h-6 w-6" />
+              <Skeleton className="h-6 w-full" />
+              <Accordion.Indicator />
+            </Accordion.Trigger>
+          </Accordion.Heading>
+          <Accordion.Panel>
+            <Accordion.Body />
+          </Accordion.Panel>
+        </Accordion.Item>
       ))}
     </Accordion>
   );

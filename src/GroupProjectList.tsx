@@ -1,9 +1,11 @@
 import {
   Avatar,
   Button,
-  Listbox,
-  ListboxItem,
-  ListboxSection,
+  Description,
+  Header,
+  Label,
+  ListBox,
+  Separator,
   Skeleton,
   Spinner,
 } from "@heroui/react";
@@ -66,31 +68,30 @@ const GroupProjectList: React.FC<{
     onDragEnd: onProjectDragEnd,
   } = useDrag(currentStarredProjects);
 
-  const loadingItem = (
-    <ListboxItem
-      key="skeleton"
+  const loadingItem = (id: string) => (
+    <ListBox.Item
+      key={id}
+      id={id}
       textValue="Loading..."
-      startContent={
-        <Avatar
-          isBordered
-          radius="sm"
-          size="sm"
-          className="shrink-0"
-          icon={<Skeleton className="h-full w-full" />}
-        />
-      }
+      className="flex items-center gap-2"
     >
-      <Skeleton className="h-5 w-full" />
-    </ListboxItem>
+      <Avatar size="sm" className="shrink-0 rounded-sm border">
+        <Avatar.Fallback>
+          <Skeleton className="h-full w-full" />
+        </Avatar.Fallback>
+      </Avatar>
+      <Label className="w-full">
+        <Skeleton className="h-5 w-full" />
+      </Label>
+    </ListBox.Item>
   );
 
   const getListboxItem = useCallback(
     ({
       key,
+      href,
       name,
       avatar,
-      base,
-      featurePath,
       featureName,
       starred,
       isLoading,
@@ -101,10 +102,9 @@ const GroupProjectList: React.FC<{
       onDrop,
     }: {
       key: string;
+      href: string;
       name: string;
       avatar: string | null;
-      base: string;
-      featurePath: string | undefined;
       featureName: string | undefined;
       starred: boolean;
       isLoading: boolean;
@@ -114,61 +114,64 @@ const GroupProjectList: React.FC<{
       onDragEnter: (() => void) | undefined;
       onDrop: () => void;
     }) => {
-      const href = generateHref(base, featurePath, search);
-
       return (
-        <ListboxItem
+        <ListBox.Item
           key={key}
+          id={key}
           href={href}
-          onPress={() => onNavigate(href)}
-          description={featureName}
-          startContent={
-            <Avatar
-              isBordered
-              radius="sm"
-              size="sm"
-              name={name}
-              {...(avatar !== null ? { src: avatar } : {})}
-              className="shrink-0"
-            />
-          }
+          textValue={name}
           data-starred={starred}
           data-loading={isLoading}
-          endContent={
-            <div className="flex gap-2">
-              {isLoading && <Spinner size="sm" variant="gradient" />}
-              <Button
-                isIconOnly
-                variant="light"
-                size="sm"
-                color={starred ? "success" : undefined}
-                className="hidden group-data-[hover=true]:inline-flex group-data-[loading=true]:inline-flex group-data-[selected=true]:inline-flex group-data-[starred=true]:inline-flex"
-                onPress={() => {
-                  onStar(!starred);
-                }}
-              >
-                {starred ? <StarredIcon /> : <StarIcon />}
-              </Button>
-            </div>
-          }
-          draggable={starred}
-          onDragOver={(event) => {
-            event.preventDefault();
-          }}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-          onDragEnter={onDragEnter}
-          onDrop={onDrop}
-          classNames={{
-            title: "truncate",
-            wrapper: "items-stretch overflow-x-hidden",
-          }}
+          className="flex items-center gap-2"
+          onPress={() => onNavigate(href)}
         >
-          {name}
-        </ListboxItem>
+          {({ isHovered, isSelected }) => (
+            <span
+              className="flex min-w-0 flex-1 items-center gap-2"
+              draggable={starred}
+              onDragOver={(event: React.DragEvent) => {
+                event.preventDefault();
+              }}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+              onDragEnter={onDragEnter}
+              onDrop={onDrop}
+            >
+              <Avatar size="sm" className="shrink-0 rounded-sm border">
+                {avatar !== null && <Avatar.Image src={avatar} alt="" />}
+                <Avatar.Fallback>{name[0]}</Avatar.Fallback>
+              </Avatar>
+              <span className="min-w-0 flex-1 overflow-x-hidden">
+                <Label className="block truncate">{name}</Label>
+                {featureName !== undefined && (
+                  <Description>{featureName}</Description>
+                )}
+              </span>
+              <span className="flex items-center gap-2">
+                <ListBox.ItemIndicator />
+                {isLoading && <Spinner color="current" size="sm" />}
+                <Button
+                  isIconOnly
+                  variant="tertiary"
+                  size="sm"
+                  className={
+                    isHovered || isSelected || starred || isLoading
+                      ? "inline-flex"
+                      : "hidden"
+                  }
+                  onPress={() => {
+                    onStar(!starred);
+                  }}
+                >
+                  {starred ? <StarredIcon /> : <StarIcon />}
+                </Button>
+              </span>
+            </span>
+          )}
+        </ListBox.Item>
       );
     },
-    [onNavigate, search],
+    [onNavigate],
   );
 
   const allKeys = [
@@ -225,41 +228,44 @@ const GroupProjectList: React.FC<{
   ];
 
   return (
-    <Listbox
+    <ListBox
       selectionMode="single"
-      selectedKeys={path !== undefined ? [path] : []}
-      disabledKeys={[
-        "skeleton",
-        ...(isDraggingGroup
-          ? allKeys.filter(
-              (key) =>
-                starredGroups.find((group) => group.full_path === key) ===
-                undefined,
-            )
-          : []),
-        ...(isDraggingProject
-          ? allKeys.filter(
-              (key) =>
-                starredProjects.find(
-                  (project) => project.path_with_namespace === key,
-                ) === undefined,
-            )
-          : []),
-      ]}
+      selectedKeys={path !== undefined ? new Set([path]) : new Set()}
+      disabledKeys={
+        new Set([
+          "skeleton-groups",
+          "skeleton-projects",
+          ...(isDraggingGroup
+            ? allKeys.filter(
+                (key) =>
+                  starredGroups.find((group) => group.full_path === key) ===
+                  undefined,
+              )
+            : []),
+          ...(isDraggingProject
+            ? allKeys.filter(
+                (key) =>
+                  starredProjects.find(
+                    (project) => project.path_with_namespace === key,
+                  ) === undefined,
+              )
+            : []),
+        ])
+      }
       aria-label="Group and Projects"
     >
-      <ListboxSection title="Groups" showDivider>
+      <ListBox.Section>
+        <Header>Groups</Header>
         {groupItems.map((item) => {
-          if (item === "loading") return loadingItem;
+          if (item === "loading") return loadingItem("skeleton-groups");
 
           const { group, starred, onDragEnter } = item;
 
           return getListboxItem({
             key: group.full_path,
-            base: group.web_url,
+            href: generateHref(group.web_url, groupFeature, search),
             name: group.name,
             avatar: group.avatar_url,
-            featurePath: groupFeature,
             featureName:
               groupFeature !== undefined
                 ? getFeatureName(groupFeature, GROUP_FEATURE_NAMES)
@@ -282,10 +288,12 @@ const GroupProjectList: React.FC<{
             onDrop: () => onStarredGroupsUpdate(starredGroups),
           });
         })}
-      </ListboxSection>
-      <ListboxSection title="Projects">
+      </ListBox.Section>
+      <Separator />
+      <ListBox.Section>
+        <Header>Projects</Header>
         {projectItems.map((item) => {
-          if (item === "loading") return loadingItem;
+          if (item === "loading") return loadingItem("skeleton-projects");
 
           const { project, starred, onDragEnter } = item;
 
@@ -307,10 +315,9 @@ const GroupProjectList: React.FC<{
 
           return getListboxItem({
             key: project.path_with_namespace,
-            base: project.web_url,
+            href: generateHref(project.web_url, featurePath, search),
             name: project.name,
             avatar: project.avatar_url,
-            featurePath,
             featureName,
             starred: starred,
             isLoading: loadingPath === project.path_with_namespace,
@@ -330,8 +337,8 @@ const GroupProjectList: React.FC<{
             onDrop: () => onStarredProjectsUpdate(starredProjects),
           });
         })}
-      </ListboxSection>
-    </Listbox>
+      </ListBox.Section>
+    </ListBox>
   );
 };
 
